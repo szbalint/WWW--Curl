@@ -1,0 +1,23 @@
+---
+abstract: 'Perl extension interface for libcurl'
+author:
+  - 'Cris Bailiff <c.bailiff+curl at devsecure.com>'
+  - 'Balint Szilakszi <szbalint at cpan.org>'
+configure_requires:
+  ExtUtils::MakeMaker: 6.50
+distribution_type: module
+generated_by: 'Module::Install version 0.81'
+license: 'MPL or MIT/X-derivate'
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+module_name: WWW::Curl
+name: WWW-Curl
+no_index:
+  directory:
+    - inc
+    - t
+    - template
+requires:
+  perl: 5.6.1
+version: 4.07

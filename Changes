@@ -1,0 +1,269 @@
+Revision history for Perl extension WWW::Curl.
+4.07 Sun May 31 2009: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Fixed >32bit integer option passing to libcurl on 32bit systems.
+      (Thanks to Peter Heuchert for the report and fix suggestion!)
+    - The CURL_CONFIG environment variable can now be used to specify
+      which curl-config to use (contributed by claes).
+    - Fixed segfault when a string option with setopt was set to undef
+      (contributed by claes).
+    - Fixed incomplete cleanup routine at destruction time
+      (contributed by claes).
+    - Readded Easy.pm and Share.pm stubs so that they are indexed by
+      CPAN, thus avoiding complications with outdated versions appearing.
+
+4.06 Sun Apr 05 2009: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Fixed a setopt issue that could cause a setopt string to get
+      corrupted with pre 7.17.0 libcurl versions.
+      (Thanks to Andreas Marienborg for the excellent bugreport and testcase!)
+    - Made the Makefile.PL curl.h parsing slightly more generic to detect a
+      wider selection of constants (fixes debian bugs #519841 and #518942).
+      This makes it possible to use CURLE_* and CURL_NETRC_* constants.
+    - Added a clearly invalid protocol to t/18twinhandles.t (fixes RT #41425).
+
+4.05 Sat Jul 06 2008: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Corrected the duphandle mechanism.
+    - Fixed a typo (fixes RT #37253).
+    - Added better Windows compatibility detection and separate
+      installation instructions (thanks to Shiyu Tang).
+
+4.04 Sat Jun 21 2008: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Test::More and use_ok at begin time doesn't mesh with no plan.
+
+4.03 Sat Jun 21 2008: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Removing option to pass destination files as a typeglob as
+      it is a backwards pointing magic and caused bugs.
+      Use a filehandle or reference instead.
+    - Fixed tests for 5.6, raised minimum Perl version to 5.6.1 due to tests.
+    - Fixed a duphandle bug.
+
+4.02 Thu Jun 19 2008: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Adding forgotten backwards compatibility with older Perl versions
+
+4.01 Wed Jun 18 2008: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Reimplemented callback handling to fix several I/O issues (fixes RT #35491)
+    - Documentation showing example WWW::Curl::Multi usage is corrected (fixes RT #35520)
+    - Should now compile on HP-UX and OSX (fixes RT #36058 and #35349)
+    - POD validity fix (fixes RT #15850)
+    - Added several new tests
+    - Upgraded to Module::Install 0.75 as it now exits correctly on build time
+      with NA if the required libcurl isn't available.
+
+4.00 Wed Mar 05 2008: - Balint Szilakszi <szbalint at cpan.org>
+    - Rewritten documentation.
+    - New test suite.
+    - New build system: using Module::Install instead of ExtUtils::Makemaker.
+    - New minimal requirements, Perl 5.6 and libcurl 7.10.8.
+    - New WWW::Curl::Multi interface.
+    - Removed WWW::Curl::easy.
+    - Removed compatibility code for pre 7.10.8 libcurl.
+    - Added lots of small improvements to setopt and friends.
+    - Bugfixes, mainly for memory leaks.
+    - SIGNATURE.
+
+3.12 Wed Feb 27 2008: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - New Share.pm.in was missed from the MANIFEST, so was not in the distribution. Fixed.
+
+3.11 Mon Feb 25 2008: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Merge recent contributions.
+    - Updates from various small bug/build reports
+
+3.10 Fri Feb 22 2008: - Anton Fedorov <datacompboy at mail.ru>
+    - Fix documentation for multi interface
+    - Added WWW::Curl::Share
+    - Added strerror into Easy and Multi interfaces
+    - Added support for CURLOPT_DEBUGFUNCTION in Easy interface
+
+3.02_01 Tue Jan 29 2008: - Mark Hindley
+    - Contributed CURLOPT_*_LARGE support
+
+3.02_00 Fri Sep 16 2005: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Workaround case-sensitive filename issues by making equivalent Easy
+      names in easy namespace
+    - Test scripts - Fixup ssl tests and remove leftover MUTE option
+    - NOTE: That due to namespace changes (easy->Easy) you must change any existing
+      code to 'use WWW::Curl::Easy' instead of 'use WWW::Curl::easy', but
+      you can still use the WWW::Curl::easy function names until they
+      are removed in a future release.
+    - Tested on Redhat EL3 (curl 7.10.6) and Mandrake 10.1 (curl 7.13.1)
+
+3.01  Thu Apr 20 2004: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Merged Sebastians changes into CVS
+    - Updated remaining tests to Test::Simple
+    - Added backwards compatability to V2 names (WWW::Curl::easy etc)
+    - Dropped backwards compatability to V1.x names
+
+3.00  Thu Feb 12 2004: - Sebastian Riedel <sri at oook.de>
+    - Added multi support
+    - New module names
+    - New tests
+    - New documentation
+    - New examples
+    - Big cleanup!!!
+    - Too much to tell, it's worth an upgrade
+
+2.00  Tue Apr 22 2003: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - New top level package name of WWW::Curl in preparation for
+      entry to CPAN
+    - Rename "Curl::easy" to "WWW::Curl::easy"
+    - Add backwards compatability namespace module for existing scripts
+    - Implement initial curl_easy_duphandle support
+    - Started on curl_easy_form support (WWW:Curl::form) - NOT FUNCTIONAL YET
+    - Fixup use of env vars in t/07ftp-upload.t (jellyfish at pisem.net)
+    - Adjust IP addresses for t/08ssl.t tests due to moved https servers
+
+1.35  Sun Sep 22 2002: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Fixed progress function callback prototype [ curl-Bugs-612432 ],
+      reflecting the fix made in curl-7.9.5. Tested in t/05progress.t to
+      now return sensible values!
+
+1.34  Wed Aug  7 2002: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Fix off-by-one error in setting up of curl_slists from perl arrays,
+      which was causing the last item of slists to be dropped. Added regression
+      test case.
+
+1.33  Mon Aug  5 2002: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Fix serious bug in read callback support (used for POST and upload
+      requests), introduced in 1.30, which uploaded random data (due to a
+      reversed src/dest in a memory copy).
+
+1.32  Thu Aug  1 2002: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Minor Makefile.PL fixes to build cleanly with curl 7.8 as found
+      on redhat 7.2.
+
+1.31  Tue Jul 16 2002: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Generate better switch() statement syntax in C code, to fix build
+      issues on some systems with strict compilers. Reported by Ignasi Roca.
+
+1.30  Mon Jul 15 2002: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Testing release after complete code overhaul. Now supports
+      cleaner object interface, supports multiple handles per process,
+      uses PerlIO for portable I/O (which should be perl 5.8 ready) and
+      maybe even supports ithreads. Should be fully backwards compatible,
+      but please read the man page for change details and report any issues.
+    - Fixed warning caused by slist functions accessing past the end of the
+      perl array.
+    - Fixed leak caused by consuming slist arguments without freeing.
+    - Updates test scripts to OO style, cleaned up output.
+    - Deprecated USE_INTERNAL_VARS.
+
+1.21  Thu Jul 11 2002: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Minor fixes to assist windows builds from Shawn Poulson
+    - Allow passing curl include location on the command line when
+      running perl Makefile.PL
+
+1.20  Sat Feb 16 2002: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Use standard perl module numbering syntax (valid decimal)
+    - Skipped 1.10 in case anyone confuses it with 1.1.0
+    - Made every build a rebuild and removed 'pre-built' files - no point
+      worrying about not finding curl.h - if we can't find it, we can't
+      compile anyway. Obviates bug in 1.1.9 preventing rebuilds.
+    - Add support for redefining CURLOPT_STDERR (file handle globs only!)
+
+1.1.9  Sat Dec  8 2001: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Enhance Makefile.PL to re-build easy.pm and 'constants' xs
+      function from local installed curl.h. CURLOPT_ and CURLINFO_
+      Constants up-to-date for libcurl-7.9.2, but can be re-built
+      for almost any libcurl version by removing easy.pm and
+      curlopt-constants.c and re-running 'perl Makefile.PL'
+    - Use curl-config to find include and library compile options
+    - Updated test scripts to work better under 'make test' (You need
+      to set the environment variable 'CURL_TEST_URL' though!)
+    - Added test script to display transfer times using new time options
+    - Merge changes in Curl_easy 1.1.2.1 by Georg Horn
+
+1.1.8  Thu Sep 20 2001: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Re-generate CURLOPT_ constants from curl.h and enhance makefile
+      to allow this to be repeated in future or for older versions of
+      libcurl. Constants up-to-date for libcurl-7.9(pre)
+    - Split tests into t/*.t to simplify each case
+    - Add test cases for new SSL switches. This needs ca-bundle.crt
+      (from mod_ssl) for verifying test cases.
+
+1.1.7  Thu Sep 13 2001: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Documentation Update only - Explicitly state that Curl_easy
+      is released under the MIT-X/MPL dual licence. No code changes.
+
+1.1.6  Mon Sep 10 2001: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Fix segfault due to changes in header callback behaviour
+      since curl-7.8.1-pre3
+
+1.1.5  Fri Apr 20 2001: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Add latest CURLOPT_ and CURLINFO_ constants to the constants list
+
+1.1.4  Fri Apr 20 2001: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Fix case where curl_slists such as 'HTTPHEADERS' need to
+      be re-set over persistant requests
+
+1.1.3  Wed Apr 18 2001: - Cris Bailiff <c.bailiff+curl at devsecure.com>
+    - Change/shorten module function names: Curl::easy::curl_easy_setopt
+      becomes Curl::easy::setopt etc. This requires minor changes to existing
+      scripts....
+    - Added callback function support to pass arbitrary SV * (including
+      FILE globs) from perl through libcurl to the perl callback.
+    - Make callbacks still work with existing scripts which use STDIO
+    - Initial support for libcurl 7.7.2 HEADERFUNCTION callback feature
+    - Minor API cleanups/changes in the callback function signatures
+    - Added Curl::easy::version function to return curl version string
+    - Callback documentation added in easy.pm
+    - More tests in test.pl
+
+1.1.2  Mon Apr 16 2001: - Georg Horn <horn at koblenz-net.de>
+    - Added support for callback functions. This is for the curl_easy_setopt()
+      options WRITEFUNCTION, READFUNCTION, PROGRESSFUNCTION and PASSWDFUNCTION.
+      Still missing, but not really neccessary: Passing a FILE * pointer,
+      that is passed in from libcurl, on to the perl callback function.
+    - Various cleanups, fixes and enhancements to easy.xs and test.pl.
+
+1.1.1  Thu Apr 12 2001:
+    - Made more options of curl_easy_setopt() work: Options that require
+      a list of curl_slist structs to be passed in, like CURLOPT_HTTPHEADER,
+      are now working by passing a perl array containing the list elements.
+      As always, look at the test script test.pl for an example.
+
+1.1.0  Wed Apr 11 2001:
+    - tested against libcurl 7.7
+    - Added new function Curl::easy::internal_setopt(). By calling
+      Curl::easy::internal_setopt(Curl::easy::USE_INTERNAL_VARS, 1);
+      the headers and content of the fetched page are no longer stored
+      into files (or written to stdout) but are stored into internal
+      Variables $Curl::easy::headers and $Curl::easy::content.
+
+1.0.2  Tue Oct 10 2000:
+    - runs with libcurl 7.4
+    - modified curl_easy_getinfo(). It now calls curl_getinfo() that has
+      been added to libcurl in version 7.4.
+
+1.0.1  Tue Oct 10 2000:
+    - Added some missing features of curl_easy_setopt():
+      - CURLOPT_ERRORBUFFER now works by passing the name of a perl
+        variable that shall be crated and the errormessage (if any)
+    be stored to.
+      - Passing filehandles (Options FILE, INFILE and WRITEHEADER) now works.
+    Have a look at test.pl to see how it works...
+
+    - Added a new function, curl_easy_getinfo(), that for now always
+      returns the number of bytes that where written to disk during the last
+      download. If the curl_easy_getinfo() function is included in libcurl,
+      (as promised by Daniel ;-)) i will turn this into just a call to this
+      function.
+
+1.0  Thu Oct 5 2000:
+    - first released version
+    - runs with libcurl 7.3
+    - some features of curl_easy_setopt() are still missing:
+      - passing function pointers doesn't work (options WRITEFUNCTION,
+    READFUNCTION and PROGRESSFUNCTION).
+      - passing FILE * pointers doesn't work (options FILE, INFILE and
+    WRITEHEADER).
+      - passing linked lists doesn't work (options HTTPHEADER and
+    HTTPPOST).
+      - setting the buffer where to store error messages in doesn't work
+    (option ERRORBUFFER).
+

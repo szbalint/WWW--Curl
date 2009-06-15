@@ -1,0 +1,8 @@
+These test scripts have been updated by Sebastian Riedel to use modern
+features of the Test::Harness suite, such as Test::Simple and Test::More,
+which makes them cleaner and more maintainable, but which are unfortunately
+not natively supported by older perl versions. They are placed here reference,
+and will become the standard test scripts once we drop support for perl5.005.
+
+
+

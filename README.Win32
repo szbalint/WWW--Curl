@@ -1,0 +1,12 @@
+Installation on Windows need to be done manually, by editing Makefile.PL.
+
+1. Specify your curl include directory on the line "my @include = qw()".
+2. Specify the following parameters on the line below, where <DIR> is your curl directory like this:
+
+my ($cflags,$ldflags,$lflags) = ('-I"<DIR>\\include"', '-L"<DIR>\\lib"','-lcurl -lcurldll');
+
+<DIR> can be for example: "E:\\Perldev\\downloader\\curl-7.18.2-devel-mingw32" (without quotes);
+3. Save Makefile.PL.
+4. Execute "perl Makefile.PL";
+5. Execute "nmake" ( you may need nmake from Mircosoft, which can be downloaded from http://support.microsoft.com/default.aspx?scid=kb;en-us;Q132084 );
+6. Execute "nmake install".

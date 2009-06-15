@@ -1,0 +1,5 @@
+TYPEMAP
+WWW::Curl::Easy T_PTROBJ
+WWW::Curl::Form T_PTROBJ
+WWW::Curl::Multi T_PTROBJ
+WWW::Curl::Share T_PTROBJ
