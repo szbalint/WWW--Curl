@@ -830,6 +830,7 @@ curl_easy_setopt(self, option, value)
 	           	char* pv = SvOK(value) ? SvPV(value, dummy) : "";
 	           	I32 len = (I32)dummy;
 	           	pv = savepvn(pv, len);
+			if (self->strings[option-10000] != NULL) Safefree(self->strings[option-10000]);
 			self->strings[option-10000] = pv;
 			if (self->strings_index < option - 10000) self->strings_index = option - 10000;
 			RETVAL = curl_easy_setopt(self->curl, option, SvOK(value) ? pv : NULL);
