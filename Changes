@@ -1,4 +1,4 @@
-Revision history for Perl extension WWW::Curl.
+Revision history for the Perl binding of libcurl, WWW::Curl.
 4.07 Sun May 31 2009: - Balint Szilakszi <szbalint at cpan.org>
 
     - Fixed >32bit integer option passing to libcurl on 32bit systems.

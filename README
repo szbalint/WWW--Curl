@@ -1,6 +1,6 @@
 README for Perl extension WWW::Curl
 
-The perl module WWW::Curl provides an interface to the cURL library "libcurl".
+The Perl module WWW::Curl provides an interface to the cURL library "libcurl".
 See http://curl.haxx.se/ for more information on cURL and libcurl.
 
 This module requires libcurl and the corresponding headerfiles to be
@@ -50,12 +50,15 @@ features have been added by Cris Bailiff <c.bailiff+curl at devsecure.com>
 
 Curl multi support has been added by Sebastian Riedel <sri at oook.de>
 
-The current maintainer is Cris Bailiff <c.bailiff+curl at devsecure.com>
+The current maintainer is Cris Bailiff <c.bailiff+curl at devsecure.com> and
+Bálint Szilakszi <szbalint at cpan.org>
 
-The latest version can be downloaded from http://curl.haxx.se/libcurl/perl/ or
-found on CPAN as the module WWW::Curl
+The latest version is available on CPAN and can be downloaded from
+http://search.cpan.org/perldoc?WWW::Curl .
+
+The source code repository is available at http://github.com/szbalint/WWW--Curl/tree .
  
-Copyright (C) 2000-2005, 2008 Daniel Stenberg, Cris Bailiff , et al.  
+Copyright (C) 2000-2005, 2008-2009 Daniel Stenberg, Cris Bailiff, Bálint Szilakszi, et al.  
 You may opt to use, copy, modify, merge, publish, distribute and/or sell
 copies of the Software, and permit persons to whom the Software is
 furnished to do so, under the terms of the MPL or the MIT/X-derivate 
