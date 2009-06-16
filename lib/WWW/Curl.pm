@@ -348,3 +348,5 @@ pick one of these licenses.
 L<http://curl.haxx.se>
 
 L<http://search.cpan.org/perldoc?WWW::Curl::Simple>
+
+The development source code is also available: L<http://github.com/szbalint/WWW--Curl/tree/master>
