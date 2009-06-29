@@ -23,6 +23,16 @@ if ($^O ne 'MSWin32') {
 
 my $curl_config = $ENV{CURL_CONFIG} || 'curl-config';
 
+my $vernum = `${curl_config} --vernum`; chomp $vernum;
+my $version = `${curl_config} --version`; chomp $version;
+
+if ($vernum <= "070a08") {
+	print	"Your currently installed libcurl version - $version - is too old.\n".
+		"This module doesn't seek compatibility with versions older than 7.10.8\n".
+		"Proceed manually if you know what you're doing.\n";
+	exit(0);
+}
+
 my @includes = qw();
 my ($cflags,$lflags, $ldflags) = ('','','');
 
@@ -41,10 +51,10 @@ if ($^O ne 'MSWin32') {
 		../curl/include
 	);
 }
+
 #
 # Get curl to tell us where it is, if we can.
 #
-
 
 if ($^O ne 'MSWin32') {
 	$cflags = `${curl_config} --cflags`;
