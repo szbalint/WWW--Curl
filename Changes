@@ -1,4 +1,11 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
+4.08 Tue Jul 07 2009: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Fixed a memory leak in setopt.
+    - Added a check to Makefile.PL for the minimum libcurl version.
+    - Mentioned WWW::Curl hosting on github.
+    - Upgraded bundled Module::Install to 0.91.
+
 4.07 Sun May 31 2009: - Balint Szilakszi <szbalint at cpan.org>
 
     - Fixed >32bit integer option passing to libcurl on 32bit systems.

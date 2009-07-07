@@ -6,7 +6,7 @@ author:
 configure_requires:
   ExtUtils::MakeMaker: 6.50
 distribution_type: module
-generated_by: 'Module::Install version 0.81'
+generated_by: 'Module::Install version 0.91'
 license: 'MPL or MIT/X-derivate'
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html

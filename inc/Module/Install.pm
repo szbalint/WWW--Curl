@@ -17,12 +17,10 @@ package Module::Install;
 #     3. The ./inc/ version of Module::Install loads
 # }
 
-BEGIN {
-	require 5.004;
-}
+use 5.005;
 use strict 'vars';
 
-use vars qw{$VERSION};
+use vars qw{$VERSION $MAIN};
 BEGIN {
 	# All Module::Install core packages now require synchronised versions.
 	# This will be used to ensure we don't accidentally load old or
@@ -30,7 +28,10 @@ BEGIN {
 	# This is not enforced yet, but will be some time in the next few
 	# releases once we can make sure it won't clash with custom
 	# Module::Install extensions.
-	$VERSION = '0.81';
+	$VERSION = '0.91';
+
+	# Storage for the pseudo-singleton
+	$MAIN    = undef;
 
 	*inc::Module::Install::VERSION = *VERSION;
 	@inc::Module::Install::ISA     = __PACKAGE__;
@@ -93,6 +94,7 @@ END_DIE
 
 
 
+
 # Build.PL was formerly supported, but no longer is due to excessive
 # difficulty in implementing every single feature twice.
 if ( $0 =~ /Build.PL$/i ) { die <<"END_DIE" }
@@ -131,14 +133,22 @@ sub autoload {
 	$sym->{$cwd} = sub {
 		my $pwd = Cwd::cwd();
 		if ( my $code = $sym->{$pwd} ) {
-			# delegate back to parent dirs
+			# Delegate back to parent dirs
 			goto &$code unless $cwd eq $pwd;
 		}
 		$$sym =~ /([^:]+)$/ or die "Cannot autoload $who - $sym";
-		unless ( uc($1) eq $1 ) {
-			unshift @_, ( $self, $1 );
-			goto &{$self->can('call')};
+		my $method = $1;
+		if ( uc($method) eq $method ) {
+			# Do nothing
+			return;
+		} elsif ( $method =~ /^_/ and $self->can($method) ) {
+			# Dispatch to the root M:I class
+			return $self->$method(@_);
 		}
+
+		# Dispatch to the appropriate plugin
+		unshift @_, ( $self, $1 );
+		goto &{$self->can('call')};
 	};
 }
 
@@ -163,6 +173,9 @@ sub import {
 	delete $INC{"$self->{file}"};
 	delete $INC{"$self->{path}.pm"};
 
+	# Save to the singleton
+	$MAIN = $self;
+
 	return 1;
 }
 
@@ -176,8 +189,7 @@ sub preload {
 
 	my @exts = @{$self->{extensions}};
 	unless ( @exts ) {
-		my $admin = $self->{admin};
-		@exts = $admin->load_all_extensions;
+		@exts = $self->{admin}->load_all_extensions;
 	}
 
 	my %seen;
@@ -260,7 +272,7 @@ END_DIE
 sub load_extensions {
 	my ($self, $path, $top) = @_;
 
-	unless ( grep { !ref $_ and lc $_ eq lc $self->{prefix} } @INC ) {
+	unless ( grep { ! ref $_ and lc $_ eq lc $self->{prefix} } @INC ) {
 		unshift @INC, $self->{prefix};
 	}
 
@@ -341,7 +353,7 @@ sub _read {
 	if ( $] >= 5.006 ) {
 		open( FH, '<', $_[0] ) or die "open($_[0]): $!";
 	} else {
-		open( FH, "< $_[0]"  ) or die "open($_[0]): $!";	
+		open( FH, "< $_[0]"  ) or die "open($_[0]): $!";
 	}
 	my $string = do { local $/; <FH> };
 	close FH or die "close($_[0]): $!";
@@ -372,7 +384,7 @@ sub _write {
 	if ( $] >= 5.006 ) {
 		open( FH, '>', $_[0] ) or die "open($_[0]): $!";
 	} else {
-		open( FH, "> $_[0]"  ) or die "open($_[0]): $!";	
+		open( FH, "> $_[0]"  ) or die "open($_[0]): $!";
 	}
 	foreach ( 1 .. $#_ ) {
 		print FH $_[$_] or die "print($_[0]): $!";
