@@ -24,9 +24,11 @@ if ($^O ne 'MSWin32') {
 my $curl_config = $ENV{CURL_CONFIG} || 'curl-config';
 
 my $vernum = `${curl_config} --vernum`; chomp $vernum;
-my $version = `${curl_config} --version`; chomp $version;
+my $version = `${curl_config} --version`; chomp $version; 
 
-if ($vernum <= "070a08") {
+my $minimum_ver = hex("070a08");
+
+if ($vernum && hex($vernum) <= $minimum_ver) {
 	print	"Your currently installed libcurl version - $version - is too old.\n".
 		"This module doesn't seek compatibility with versions older than 7.10.8\n".
 		"Proceed manually if you know what you're doing.\n";
