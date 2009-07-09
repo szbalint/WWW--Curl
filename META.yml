@@ -3,8 +3,10 @@ abstract: 'Perl extension interface for libcurl'
 author:
   - 'Cris Bailiff <c.bailiff+curl at devsecure.com>'
   - 'Balint Szilakszi <szbalint at cpan.org>'
+build_requires:
+  ExtUtils::MakeMaker: 6.42
 configure_requires:
-  ExtUtils::MakeMaker: 6.50
+  ExtUtils::MakeMaker: 6.42
 distribution_type: module
 generated_by: 'Module::Install version 0.91'
 license: 'MPL or MIT/X-derivate'
