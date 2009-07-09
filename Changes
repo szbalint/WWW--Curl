@@ -1,4 +1,8 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
+4.09 Thu Jul 09 2009: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Fixing broken version check.
+
 4.08 Tue Jul 07 2009: - Balint Szilakszi <szbalint at cpan.org>
 
     - Fixed a memory leak in setopt.
