@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 16;
+use Test::More tests => 18;
 use File::Temp qw/tempfile/;
 
 BEGIN { use_ok( 'WWW::Curl::Easy' ); }
@@ -35,6 +35,7 @@ $myheaders[0] = "Server: www";
 $myheaders[1] = "User-Agent: Perl interface for libcURL";
 ok(! $curl->setopt(CURLOPT_HTTPHEADER, \@myheaders), "Setting CURLOPT_HTTPHEADER");
 
+$curl->setopt(CURLOPT_COOKIEFILE, "");
 my $retcode = $curl->perform();
 
 ok(! $retcode, "Curl return code ok");
@@ -45,6 +46,14 @@ my $realurl = $curl->getinfo(CURLINFO_EFFECTIVE_URL);
 ok( $realurl, "getinfo returns CURLINFO_EFFECTIVE_URL");
 my $httpcode = $curl->getinfo(CURLINFO_HTTP_CODE);
 ok( $httpcode, "getinfo returns CURLINFO_HTTP_CODE");
+
+SKIP: {
+    skip "Only testing cookies against google.com", 2 unless $url eq "http://www.google.com";
+    my $cookies = $curl->getinfo(CURLINFO_COOKIELIST);
+    is(ref $cookies, "ARRAY", "Returned array reference");
+    ok(@$cookies > 0, "Got 1 or more cookies");
+}
+
 #diag ("Bytes: $bytes");
 #diag ("realurl: $realurl");
 #diag ("httpcode: $httpcode");

@@ -1,4 +1,8 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
+4.10 ??? - Balint Szilakszi <szbalint at cpan.org>
+
+    - Added support for CURLINFO_SLIST in getinfo (patch by claes)
+    
 4.09 Thu Jul 09 2009: - Balint Szilakszi <szbalint at cpan.org>
 
     - Fixing broken version check.
