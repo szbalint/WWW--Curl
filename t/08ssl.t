@@ -10,10 +10,6 @@ use WWW::Curl::Easy;
 #         site-url, verifypeer(0,1), verifyhost(0,2), result(0=ok, 1=fail), result-openssl0.9.5
 my $url_list=[
 
-        [ 'https://65.205.248.243/',  0, 0, 0 , 0 ], # www.thawte.com
-#        [ 'https://65.205.248.243/',  0, 2, 1 , 1 ], # www.thawte.com
-	[ 'https://65.205.249.60/',  0, 0, 0 , 0 ], # www.verisign.com
-#	[ 'https://65.205.249.60/',  0, 2, 1 , 1 ], # www.verisign.com
 	[ 'https://www.microsoft.com/', 0, 0, 0 , 0 ],
 	[ 'https://www.microsoft.com/', 0, 0, 0 , 0 ],
 	[ 'https://www.verisign.com/', 1, 2, 0 , 0 ], # verisign have had broken ssl - do this first
