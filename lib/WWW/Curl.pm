@@ -271,6 +271,11 @@ Not yet implemented.
 Most methods are either not exposed through the WWW::Curl::Multi API or they behave differently
 than it's C counterpart. Please see the section about WWW::Curl::Multi above.
 
+=item curl_multi_fdset
+
+This method returns three arrayrefs: the read, write and exception fds libcurl knows about.
+In the case of no file descriptors in the given set, an empty array is returned.
+
 =back
 
 =head1 USAGE CASES
