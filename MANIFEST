@@ -35,6 +35,7 @@ t/15duphandle-callback.t
 t/16formpost.t
 t/17slist.t
 t/18twinhandles.t
+t/19multi.t
 t/meta.t
 t/new/00constants.t
 t/new/01basic.t
