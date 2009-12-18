@@ -56,17 +56,13 @@ sub action_wait {
     ok( ! @{$fds[0]} && ! @{$fds[1]} && !@{$fds[2]} , "The three returned arrayrefs are still empty after perform and add_handle");
     $curlm->perform;
     @fds = $curlm->fdset;
-    my $ctime = $curl->getinfo(CURLINFO_CONNECT_TIME);
-    ok( $ctime || ! @{$fds[0]} && @{$fds[1]} == 1 && !@{$fds[2]} , "The write fdset contains one fd, the rest empty or we already are successfully connected");
+    ok( @{$fds[0]} == 1 || @{$fds[1]} == 1, "The read or write fdset contains one fd");
     $curlm->add_handle($curl2);
     @fds = $curlm->fdset;
-    $ctime = $curl->getinfo(CURLINFO_CONNECT_TIME);
-    ok( $ctime || ! @{$fds[0]} && @{$fds[1]} == 1 && !@{$fds[2]} , "The write fdset contains one fd, the rest empty or we already are successfully connected");
+    ok(@{$fds[0]} == 1 || @{$fds[1]} == 1, "The read or write fdset still only contains one fd");
     $curlm->perform;
     @fds = $curlm->fdset;
-    $ctime = $curl->getinfo(CURLINFO_CONNECT_TIME);
-    my $ctime2 = $curl2->getinfo(CURLINFO_CONNECT_TIME);
-    ok( $ctime || $ctime2 || ! @{$fds[0]} && @{$fds[1]} == 2 && !@{$fds[2]} , "The write fdset contains two fd, the rest empty or we already are successfully connected");
+    ok( @{$fds[0]} == 2 || @{$fds[1]} == 2, "The read or write fdset contains two fds");
     while ($curlm->perform) {
         action_wait($curlm);
     }
