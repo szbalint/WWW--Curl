@@ -22,4 +22,4 @@ no_index:
     - template
 requires:
   perl: 5.6.1
-version: 4.09
+version: 4.10

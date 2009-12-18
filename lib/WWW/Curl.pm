@@ -6,7 +6,7 @@ use vars qw(@ISA $VERSION);
 use DynaLoader;
 
 BEGIN {
-    $VERSION = '4.09';
+    $VERSION = '4.10';
     @ISA     = qw(DynaLoader);
     __PACKAGE__->bootstrap;
 }
