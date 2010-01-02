@@ -9,6 +9,7 @@ author			'Cris Bailiff <c.bailiff+curl at devsecure.com>';
 license			'MPL or MIT/X-derivate';
 perl_version		'5.006001';
 no_index		directory => 'template';
+repository		'http://github.com/szbalint/WWW--Curl';
 # This is a hack. If you have libcurl installed, just specify curl.h below
 # and comment out this line.
 if ($^O ne 'MSWin32') {
