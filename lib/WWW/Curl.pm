@@ -169,6 +169,26 @@ This is how you enable sharing for a specific WWW::Curl::Easy handle:
 	$curl->setopt(CURLOPT_SHARE, $curlsh)
 		Attach share object to WWW::Curl::Easy instance
 
+=head1 WWW::Curl::Form
+
+    use WWW::Curl::Form;
+    my $curlf = WWW::Curl::Form->new;
+    $curlf->curl_formaddfile($filename, 'attachment', "multipart/form-data");
+    $curlf->curl_formadd("FIELDNAME", "VALUE");
+
+    $curl->setopt(CURLOPT_HTTPPOST, $curlf);
+
+Its usable methods are:
+
+    $curlf = new WWW::Curl::Form
+        This method constructs a new WWW::Curl::Form object.
+
+    $curlf->formadd(FIELDNAME, VALUE)
+        This method adds a field with a given value, to the form that is being submitted.
+
+    $curlf->formaddfile(FILENAME, DESCRIPTION, TYPE)
+        This method will add a file to the form. The description is the name of the field
+        that you form expects the data to be submitted in.
 
 =head1 COMPATIBILITY
 
@@ -217,7 +237,11 @@ Not implemented and won't be as this method is considered deprecated.
 
 =item curl_formadd
 
-Not yet implemented.
+Seems to be working.
+
+=item curl_formaddfile
+
+Seems to be working.
 
 =item curl_formfree
 

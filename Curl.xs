@@ -62,8 +62,8 @@ typedef struct {
 
 
 typedef struct {
-    struct HttpPost * post;
-    struct HttpPost * last;
+    struct curl_httppost * post;
+    struct curl_httppost * last;
 } perl_curl_form;
 
 
@@ -218,11 +218,9 @@ static perl_curl_form * perl_curl_form_new()
 
 static void perl_curl_form_delete(perl_curl_form *self)
 {
-#if 0
     if (self->post) {
         curl_formfree(self->post);
     }
-#endif
     Safefree(self);
 }
 
@@ -790,17 +788,16 @@ curl_easy_setopt(self, option, value)
                 RETVAL = curl_easy_setopt(self->curl, option, IoOFP(sv_2io(value)) );
                 break;
 
-            /* not working yet...
+            /* not working yet... */
             case CURLOPT_HTTPPOST:
                 if (sv_derived_from(value, "WWW::Curl::Form")) {
-                    WWW__Curl__form wrapper;
+                    WWW__Curl__Form wrapper;
                     IV tmp = SvIV((SV*)SvRV(value));
-                    wrapper = INT2PTR(WWW__Curl__form,tmp);
+                    wrapper = INT2PTR(WWW__Curl__Form,tmp);
                     RETVAL = curl_easy_setopt(self->curl, option, wrapper->post);
                 } else
                     croak("value is not of type WWW::Curl::Form"); 
                 break;
-            */
 
             /* Curl share support from Anton Fedorov */
 #if (LIBCURL_VERSION_NUM>=0x070a03)
@@ -978,6 +975,11 @@ curl_easy_strerror(self, errornum)
 
 MODULE = WWW::Curl    PACKAGE = WWW::Curl::Form    PREFIX = curl_form_
 
+int
+constant(name,arg)
+    char * name
+    int arg
+
 void
 curl_form_new(...)
     PREINIT:
@@ -998,32 +1000,28 @@ curl_form_new(...)
         XSRETURN(1);
 
 void
-curl_form_add(self,name,value)
+curl_formadd(self,name,value)
     WWW::Curl::Form self
     char *name
     char *value
     CODE:
-#if 0
         curl_formadd(&(self->post),&(self->last),
             CURLFORM_COPYNAME,name,
             CURLFORM_COPYCONTENTS,value,
             CURLFORM_END); 
-#endif
 
 void
-curl_form_addfile(self,filename,description,type)
+curl_formaddfile(self,filename,description,type)
     WWW::Curl::Form self
     char *filename
     char *description
     char *type
     CODE:
-#if 0
         curl_formadd(&(self->post),&(self->last),
             CURLFORM_FILE,filename,
             CURLFORM_COPYNAME,description,
             CURLFORM_CONTENTTYPE,type,
             CURLFORM_END); 
-#endif
 
 void
 curl_form_DESTROY(self)
