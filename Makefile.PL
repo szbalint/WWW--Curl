@@ -111,6 +111,8 @@ if (!defined($curl_h)) {
 	    $constants{CURLOPT_}->{$option} = $value;
         } elsif ($_ =~ m/^\s*(CURLINFO_|CURLSHOPT_|CURL_LOCK_DATA_|CURLE_|CURL_NETRC_)(\w+)/) {
 	    $constants{$1}->{$2} = $2;
+        } elsif ($_ =~ m/^\s*CURLPROXY_(\w+)\s*=\s*\d+/) {
+            $constants{CURLPROXY_}->{$1} = $1;
         }
 
     }
@@ -186,7 +188,7 @@ HERE
         if ($line !~ m/^\@CURLOPT_INCLUDE\@/) {
 			print EASY_PM $line;
         } else {
-	for my $group (qw/CURLOPT_ CURLINFO_ CURLE_ CURL_NETRC_/) {
+	for my $group (qw/CURLOPT_ CURLINFO_ CURLE_ CURL_NETRC_ CURLPROXY_/) {
             for my $option (sort keys %{$constants{$group}}) {
                 next unless $option;
                 print EASY_PM $group.$option."\n";
