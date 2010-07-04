@@ -23,6 +23,11 @@ require AutoLoader;
 $WWW::Curl::Easy::headers = "";
 $WWW::Curl::Easy::content = "";
 
+sub const_string {
+	my ($self, $constant) = @_;
+	return constant($constant,0);
+}
+
 sub AUTOLOAD {
 
     # This AUTOLOAD is used to 'autoload' constants from the constant()
