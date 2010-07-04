@@ -49,7 +49,9 @@ ok( $httpcode, "getinfo returns CURLINFO_HTTP_CODE");
 
 SKIP: {
     skip "Only testing cookies against google.com", 2 unless $url eq "http://www.google.com";
-    my $cookies = $curl->getinfo(CURLINFO_COOKIELIST);
+    my $cookielist_const = $curl->const_string("CURLINFO_COOKIELIST");
+    skip "libcurl doesn't have the CURLINFO_COOKIELIST constant", 2 unless $cookielist_const;
+    my $cookies = $curl->getinfo($cookielist_const);
     is(ref $cookies, "ARRAY", "Returned array reference");
     ok(@$cookies > 0, "Got 1 or more cookies");
 }
