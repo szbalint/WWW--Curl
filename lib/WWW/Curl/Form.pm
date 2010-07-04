@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD);
 
-$VERSION = '4.11';
+$VERSION = '4.12';
 
 require WWW::Curl;
 require Exporter;

@@ -1,4 +1,11 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
+4.12 Sun Jun 04 2010: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Fixed WWW::Curl::Form (patch contributed by Michael Ing).
+    - Added CURLPROXY_* constants (patch by claes).
+    - Added the const_string method to provide access to constants in a non-bareword way.
+    - Fixed t/01basic.t test failure on older libcurl versions.
+
 4.11 Fri Dec 18 2009: - Balint Szilakszi <szbalint at cpan.org>
 
     - Fixed t/19multi.t for libcurl versions compiled with asyncronous dns resolution.

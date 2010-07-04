@@ -6,7 +6,7 @@ use vars qw(@ISA $VERSION);
 use DynaLoader;
 
 BEGIN {
-    $VERSION = '4.11';
+    $VERSION = '4.12';
     @ISA     = qw(DynaLoader);
     __PACKAGE__->bootstrap;
 }
@@ -364,7 +364,7 @@ repackaged the module into a more modern form.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2000-2005,2008,2009 Daniel Stenberg, Cris Bailiff,
+Copyright (C) 2000-2005,2008-2010 Daniel Stenberg, Cris Bailiff,
 Sebastian Riedel, Balint Szilakszi et al.
 
 You may opt to use, copy, modify, merge, publish, distribute and/or sell
