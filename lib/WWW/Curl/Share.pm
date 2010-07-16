@@ -3,24 +3,40 @@ package WWW::Curl::Share;
 use strict;
 use warnings;
 use Carp;
-use vars qw(@ISA @EXPORT @EXPORT_OK $AUTOLOAD);
 
-use WWW::Curl;
-require Exporter;
-require AutoLoader;
+use WWW::Curl ();
+use Exporter  ();
 
-@ISA = qw(Exporter DynaLoader);
+our @ISA = qw(Exporter);
 
-@EXPORT = qw(
+our @EXPORT = qw(
+CURLSHOPT_LAST
+CURLSHOPT_LOCKFUNC
+CURLSHOPT_NONE
+CURLSHOPT_SHARE
+CURLSHOPT_UNLOCKFUNC
+CURLSHOPT_UNSHARE
+CURLSHOPT_USERDATA
+CURL_LOCK_DATA_CONNECT
+CURL_LOCK_DATA_COOKIE
+CURL_LOCK_DATA_DNS
+CURL_LOCK_DATA_LAST
+CURL_LOCK_DATA_NONE
+CURL_LOCK_DATA_SHARE
+CURL_LOCK_DATA_SSL_SESSION
 );
 
 sub AUTOLOAD {
-
+    our $AUTOLOAD;
     # This AUTOLOAD is used to 'autoload' constants from the constant()
     # XS function.
 
     ( my $constname = $AUTOLOAD ) =~ s/.*:://;
-    return constant( $constname, 0 );
+    my $value = constant( $constname, 0 );
+    if($!) {
+        croak("Undefined subroutine &$AUTOLOAD failed");
+    }
+    return $value;
 }
 
 1;
