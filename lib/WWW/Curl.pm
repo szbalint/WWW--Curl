@@ -2,14 +2,10 @@ package WWW::Curl;
 
 use strict;
 use warnings;
-use vars qw(@ISA $VERSION);
-use DynaLoader;
+use XSLoader;
 
-BEGIN {
-    $VERSION = '4.12';
-    @ISA     = qw(DynaLoader);
-    __PACKAGE__->bootstrap;
-}
+our $VERSION = '4.12';
+XSLoader::load(__PACKAGE__, $VERSION);
 
 END {
     _global_cleanup();
