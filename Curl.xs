@@ -908,6 +908,7 @@ curl_easy_getinfo(self, option, ... )
                 RETVAL = newSVnv(vdouble);
                 break;
             }
+#ifdef CURLINFO_SLIST
             case CURLINFO_SLIST:
             {
                 struct curl_slist *vlist, *entry;
@@ -924,6 +925,7 @@ curl_easy_getinfo(self, option, ... )
                 RETVAL = newRV(sv_2mortal((SV *) items));
                 break;
             }
+#endif /* CURLINFO_SLIST */
             default: {
                 RETVAL = newSViv(CURLE_BAD_FUNCTION_ARGUMENT);
                 break;
