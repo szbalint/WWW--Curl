@@ -22,9 +22,14 @@ sub AUTOLOAD {
     # XS function.
 
     ( my $constname = $AUTOLOAD ) =~ s/.*:://;
-    my $value = constant( $constname, 0 );
+    my $value = constant( $constname );
     if($!) {
         croak("Undefined subroutine &$AUTOLOAD caclled");
+    }
+
+    {
+        no strict 'refs';
+        *{$AUTOLOAD} = sub { $value };
     }
     return $value;
 }
