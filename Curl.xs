@@ -280,9 +280,8 @@ fwrite_wrapper (
     void *call_function,
     void *call_ctx)
 {
-    dSP;
-
     if (call_function) { /* We are doing a callback to perl */
+        dSP;
         int count, status;
 
         ENTER;
