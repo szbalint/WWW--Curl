@@ -23,7 +23,7 @@ $WWW::Curl::Easy::content = "";
 
 sub const_string {
 	my ($self, $constant) = @_;
-	return constant($constant,0);
+	return constant($constant);
 }
 
 sub AUTOLOAD {
@@ -32,9 +32,14 @@ sub AUTOLOAD {
     # XS function.
 
     ( my $constname = $AUTOLOAD ) =~ s/.*:://;
-    my $value = constant( $constname, 0 );
+    my $value = constant( $constname );
     if($!) {
         croak("Undefined subroutine &$AUTOLOAD called");
+    }
+
+    {
+        no strict 'refs';
+        *{$AUTOLOAD} = sub { $value };
     }
     return $value;
 }

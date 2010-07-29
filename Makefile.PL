@@ -131,7 +131,7 @@ if (!defined($curl_h)) {
     # boilerplate xs constant function here
     print CURL_XS <<HERE
 static int
-constant(char *name, int arg)
+constant(const char *name)
 {
     errno = 0;
 HERE

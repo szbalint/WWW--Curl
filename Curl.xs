@@ -586,9 +586,8 @@ BOOT:
 PROTOTYPES: ENABLE
 
 int
-constant(name,arg)
+constant(name)
     char * name
-    int arg
 
 
 void
@@ -977,9 +976,8 @@ curl_easy_strerror(self, errornum)
 MODULE = WWW::Curl    PACKAGE = WWW::Curl::Form    PREFIX = curl_form_
 
 int
-constant(name,arg)
+constant(name)
     char * name
-    int arg
 
 void
 curl_form_new(...)
@@ -1194,9 +1192,8 @@ MODULE = WWW::Curl    PACKAGE = WWW::Curl::Share    PREFIX = curl_share_
 PROTOTYPES: ENABLE
 
 int
-constant(name,arg)
+constant(name)
     char * name
-    int arg
 
 void
 curl_share_new(...)
