@@ -169,8 +169,8 @@ This is how you enable sharing for a specific WWW::Curl::Easy handle:
 
     use WWW::Curl::Form;
     my $curlf = WWW::Curl::Form->new;
-    $curlf->curl_formaddfile($filename, 'attachment', "multipart/form-data");
-    $curlf->curl_formadd("FIELDNAME", "VALUE");
+    $curlf->formaddfile($filename, 'attachment', "multipart/form-data");
+    $curlf->formadd("FIELDNAME", "VALUE");
 
     $curl->setopt(CURLOPT_HTTPPOST, $curlf);
 
@@ -241,8 +241,8 @@ Seems to be working.
 
 =item curl_formfree
 
-When WWW::Curl::Form support is added, this function will be used internally,
-but won't be accessible from the public API.
+Used internally. Not exposed through the public API, as this call has no relevance
+to Perl code.
 
 =item curl_free
 
