@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '4.12';
+our $VERSION = '4.13';
 
 use WWW::Curl ();
 use Exporter  ();

@@ -1,4 +1,11 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
+4.13 Wed Sep 01 2010: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Fixed WWW::Curl::Form (again, formadd and formaddfile working now).
+    - Made constant constant handling more robust and added tests [Fuji, Goro].
+    - Modernized *.pm and AUTOLOAD now throws an error on unknown method calls [Fuji, Goro].
+    - Fixed code depending on CURLINFO_SLIST to be optional [Fuji, Goro].
+
 4.12 Sun Jun 04 2010: - Balint Szilakszi <szbalint at cpan.org>
 
     - Fixed WWW::Curl::Form (patch contributed by Michael Ing).
