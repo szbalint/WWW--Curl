@@ -999,7 +999,7 @@ curl_form_new(...)
         XSRETURN(1);
 
 void
-curl_formadd(self,name,value)
+curl_form_formadd(self,name,value)
     WWW::Curl::Form self
     char *name
     char *value
@@ -1010,7 +1010,7 @@ curl_formadd(self,name,value)
             CURLFORM_END); 
 
 void
-curl_formaddfile(self,filename,description,type)
+curl_form_formaddfile(self,filename,description,type)
     WWW::Curl::Form self
     char *filename
     char *description
