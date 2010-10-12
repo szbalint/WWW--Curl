@@ -273,15 +273,15 @@ static void perl_curl_share_delete(perl_curl_share *self)
 
 static size_t
 write_to_ctx(pTHX_ SV* const call_ctx, const char* const ptr, size_t const n) {
-   /* perform write directly, via PerlIO */
-
     PerlIO *handle;
     if (call_ctx) { /* a GLOB or a SCALAR ref */
         if(SvROK(call_ctx) && SvTYPE(SvRV(call_ctx)) <= SVt_PVMG) {
+            /* write to a scalar ref */
             sv_catpvn(SvRV(call_ctx), ptr, n);
             return n;
         }
         else {
+            /* write to a filehandle */
             handle = IoOFP(sv_2io(call_ctx));
         }
     } else { /* punt to stdout */
