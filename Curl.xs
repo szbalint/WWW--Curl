@@ -81,9 +81,9 @@ typedef struct {
 
 
 /* switch from curl option codes to the relevant callback index */
-static perl_curl_easy_callback_code callback_index(int option)
+static perl_curl_easy_callback_code
+callback_index(int option)
 {
-    dTHX;
     switch(option) {
         case CURLOPT_WRITEFUNCTION:
         case CURLOPT_FILE:
@@ -114,9 +114,9 @@ static perl_curl_easy_callback_code callback_index(int option)
 }
 
 /* switch from curl slist names to an slist index */
-static perl_curl_easy_slist_code slist_index(int option)
+static perl_curl_easy_slist_code
+slist_index(int option)
 {
-    dTHX;
     switch(option) {
         case CURLOPT_HTTPHEADER:
             return SLIST_HTTPHEADER;
@@ -137,8 +137,6 @@ static perl_curl_easy * perl_curl_easy_new()
     dTHX;
     perl_curl_easy *self;
     Newz(1, self, 1, perl_curl_easy);
-    if (!self)
-        croak("out of memory");
     self->curl=curl_easy_init();
     return self;
 }
@@ -148,8 +146,6 @@ static perl_curl_easy * perl_curl_easy_duphandle(perl_curl_easy *orig)
     dTHX;
     perl_curl_easy *self;
     Newz(1, self, 1, perl_curl_easy);
-    if (!self)
-        croak("out of memory");
     self->curl=curl_easy_duphandle(orig->curl);
     return self;
 }
@@ -216,8 +212,6 @@ static perl_curl_form * perl_curl_form_new()
     dTHX;
     perl_curl_form *self;
     Newz(1, self, 1, perl_curl_form);
-    if (!self)
-        croak("out of memory");
     self->post=NULL;
     self->last=NULL;
     return self;
@@ -238,8 +232,6 @@ static perl_curl_multi * perl_curl_multi_new()
     dTHX;
     perl_curl_multi *self;
     Newz(1, self, 1, perl_curl_multi);
-    if (!self)
-        croak("out of memory");
 #ifdef __CURL_MULTI_H
     self->curlm=curl_multi_init();
 #else
@@ -266,8 +258,6 @@ static perl_curl_share * perl_curl_share_new()
     dTHX;
     perl_curl_share *self;
     Newz(1, self, 1, perl_curl_share);
-    if (!self)
-        croak("out of memory");
     self->curlsh=curl_share_init();
     return self;
 }
