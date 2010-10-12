@@ -281,6 +281,24 @@ static void perl_curl_share_delete(perl_curl_share *self)
     Safefree(self);
 }
 
+static size_t
+write_to_ctx(pTHX_ SV* const call_ctx, const char* const ptr, size_t const n) {
+   /* perform write directly, via PerlIO */
+
+    PerlIO *handle;
+    if (call_ctx) { /* a GLOB or a SCALAR ref */
+        if(SvROK(call_ctx) && SvTYPE(SvRV(call_ctx)) <= SVt_PVMG) {
+            sv_catpvn(SvRV(call_ctx), ptr, n);
+            return n;
+        }
+        else {
+            handle = IoOFP(sv_2io(call_ctx));
+        }
+    } else { /* punt to stdout */
+        handle = PerlIO_stdout();
+    }
+   return PerlIO_write(handle, ptr, n);
+}
 
 /* generic fwrite callback, which decides which callback to call */
 static size_t
@@ -328,16 +346,7 @@ fwrite_wrapper (
         return status;
 
     } else {
-   /* perform write directly, via PerlIO */
-
-        PerlIO *handle;
-        if (call_ctx) { /* Assume the context is a GLOB */
-            handle = IoOFP(sv_2io(call_ctx));
-        
-        } else { /* punt to stdout */
-           handle = PerlIO_stdout();
-        }
-           return PerlIO_write(handle,ptr,size*nmemb);
+        return write_to_ctx(aTHX_ call_ctx, ptr, size * nmemb);
     }
 }
 
@@ -392,16 +401,7 @@ fwrite_wrapper2 (
         return status;
 
     } else {
-   /* perform write directly, via PerlIO */
-
-        PerlIO *handle;
-        if (call_ctx) { /* Assume the context is a GLOB */
-            handle = IoOFP(sv_2io(call_ctx));
-        
-        } else { /* punt to stdout */
-           handle = PerlIO_stdout();
-        }
-           return PerlIO_write(handle,ptr,size*sizeof(char));
+        return write_to_ctx(aTHX_ call_ctx, ptr, size * sizeof(char));
     }
 }
 
