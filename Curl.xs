@@ -10,7 +10,7 @@
  * Software is furnished to do so, under the terms of the MPL or
  * the MIT/X-derivate licenses. You may pick one of these licenses.
  */
-
+#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -83,6 +83,7 @@ typedef struct {
 /* switch from curl option codes to the relevant callback index */
 static perl_curl_easy_callback_code callback_index(int option)
 {
+    dTHX;
     switch(option) {
         case CURLOPT_WRITEFUNCTION:
         case CURLOPT_FILE:
@@ -115,6 +116,7 @@ static perl_curl_easy_callback_code callback_index(int option)
 /* switch from curl slist names to an slist index */
 static perl_curl_easy_slist_code slist_index(int option)
 {
+    dTHX;
     switch(option) {
         case CURLOPT_HTTPHEADER:
             return SLIST_HTTPHEADER;
@@ -132,6 +134,7 @@ static perl_curl_easy_slist_code slist_index(int option)
 
 static perl_curl_easy * perl_curl_easy_new()
 {
+    dTHX;
     perl_curl_easy *self;
     Newz(1, self, 1, perl_curl_easy);
     if (!self)
@@ -142,6 +145,7 @@ static perl_curl_easy * perl_curl_easy_new()
 
 static perl_curl_easy * perl_curl_easy_duphandle(perl_curl_easy *orig)
 {
+    dTHX;
     perl_curl_easy *self;
     Newz(1, self, 1, perl_curl_easy);
     if (!self)
@@ -152,6 +156,7 @@ static perl_curl_easy * perl_curl_easy_duphandle(perl_curl_easy *orig)
 
 static void perl_curl_easy_delete(perl_curl_easy *self)
 {
+    dTHX;
     perl_curl_easy_slist_code index;
     perl_curl_easy_callback_code i;
     
@@ -189,6 +194,7 @@ static void perl_curl_easy_delete(perl_curl_easy *self)
 
 static void perl_curl_easy_register_callback(perl_curl_easy *self, SV **callback, SV *function)
 {
+    dTHX;
     if (function && SvOK(function)) {	
 	    /* FIXME: need to check the ref-counts here */
 	    if (*callback == NULL) {
@@ -207,6 +213,7 @@ static void perl_curl_easy_register_callback(perl_curl_easy *self, SV **callback
 /* start of form functions - very un-finished! */
 static perl_curl_form * perl_curl_form_new()
 {
+    dTHX;
     perl_curl_form *self;
     Newz(1, self, 1, perl_curl_form);
     if (!self)
@@ -218,6 +225,7 @@ static perl_curl_form * perl_curl_form_new()
 
 static void perl_curl_form_delete(perl_curl_form *self)
 {
+    dTHX;
     if (self->post) {
         curl_formfree(self->post);
     }
@@ -227,6 +235,7 @@ static void perl_curl_form_delete(perl_curl_form *self)
 /* make a new multi */
 static perl_curl_multi * perl_curl_multi_new()
 {
+    dTHX;
     perl_curl_multi *self;
     Newz(1, self, 1, perl_curl_multi);
     if (!self)
@@ -242,6 +251,7 @@ static perl_curl_multi * perl_curl_multi_new()
 /* delete the multi */
 static void perl_curl_multi_delete(perl_curl_multi *self)
 {
+    dTHX;
 #ifdef __CURL_MULTI_H
     if (self->curlm) 
         curl_multi_cleanup(self->curlm);
@@ -253,6 +263,7 @@ static void perl_curl_multi_delete(perl_curl_multi *self)
 /* make a new share */
 static perl_curl_share * perl_curl_share_new()
 {
+    dTHX;
     perl_curl_share *self;
     Newz(1, self, 1, perl_curl_share);
     if (!self)
@@ -264,6 +275,7 @@ static perl_curl_share * perl_curl_share_new()
 /* delete the share */
 static void perl_curl_share_delete(perl_curl_share *self)
 {
+    dTHX;
     if (self->curlsh) 
         curl_share_cleanup(self->curlsh);
     Safefree(self);
@@ -280,6 +292,7 @@ fwrite_wrapper (
     void *call_function,
     void *call_ctx)
 {
+    dTHX;
     if (call_function) { /* We are doing a callback to perl */
         dSP;
         int count, status;
@@ -338,6 +351,7 @@ fwrite_wrapper2 (
     void *call_ctx,
     int curl_infotype)
 {
+    dTHX;
     dSP;
 
     if (call_function) { /* We are doing a callback to perl */
@@ -392,7 +406,7 @@ fwrite_wrapper2 (
 }
 
 /* Write callback for calling a perl callback */
-size_t
+static size_t
 write_callback_func(const void *ptr, size_t size, size_t nmemb, void *stream)
 {
     perl_curl_easy *self;
@@ -402,7 +416,7 @@ write_callback_func(const void *ptr, size_t size, size_t nmemb, void *stream)
 }
 
 /* header callback for calling a perl callback */
-size_t
+static size_t
 writeheader_callback_func(const void *ptr, size_t size, size_t nmemb, void *stream)
 {
     perl_curl_easy *self;
@@ -413,7 +427,7 @@ writeheader_callback_func(const void *ptr, size_t size, size_t nmemb, void *stre
 }
 
 /* debug callback for calling a perl callback */
-size_t
+static size_t
 debug_callback_func(CURL* handle, int curl_infotype, const void *ptr, size_t size, void *stream)
 {
     perl_curl_easy *self;
@@ -424,9 +438,10 @@ debug_callback_func(CURL* handle, int curl_infotype, const void *ptr, size_t siz
 }
 
 /* read callback for calling a perl callback */
-size_t
+static size_t
 read_callback_func( void *ptr, size_t size, size_t nmemb, void *stream)
 {
+    dTHX;
     dSP ;
 
     size_t maxlen;
@@ -492,6 +507,7 @@ read_callback_func( void *ptr, size_t size, size_t nmemb, void *stream)
 static int progress_callback_func(void *clientp, double dltotal, double dlnow,
     double ultotal, double ulnow)
 {
+    dTHX;
     dSP;
 
     int count;
