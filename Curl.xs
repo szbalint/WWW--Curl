@@ -134,7 +134,6 @@ slist_index(int option)
 
 static perl_curl_easy * perl_curl_easy_new()
 {
-    dTHX;
     perl_curl_easy *self;
     Newz(1, self, 1, perl_curl_easy);
     self->curl=curl_easy_init();
@@ -143,7 +142,6 @@ static perl_curl_easy * perl_curl_easy_new()
 
 static perl_curl_easy * perl_curl_easy_duphandle(perl_curl_easy *orig)
 {
-    dTHX;
     perl_curl_easy *self;
     Newz(1, self, 1, perl_curl_easy);
     self->curl=curl_easy_duphandle(orig->curl);
@@ -209,7 +207,6 @@ static void perl_curl_easy_register_callback(perl_curl_easy *self, SV **callback
 /* start of form functions - very un-finished! */
 static perl_curl_form * perl_curl_form_new()
 {
-    dTHX;
     perl_curl_form *self;
     Newz(1, self, 1, perl_curl_form);
     self->post=NULL;
@@ -219,7 +216,6 @@ static perl_curl_form * perl_curl_form_new()
 
 static void perl_curl_form_delete(perl_curl_form *self)
 {
-    dTHX;
     if (self->post) {
         curl_formfree(self->post);
     }
@@ -229,7 +225,6 @@ static void perl_curl_form_delete(perl_curl_form *self)
 /* make a new multi */
 static perl_curl_multi * perl_curl_multi_new()
 {
-    dTHX;
     perl_curl_multi *self;
     Newz(1, self, 1, perl_curl_multi);
 #ifdef __CURL_MULTI_H
@@ -243,7 +238,6 @@ static perl_curl_multi * perl_curl_multi_new()
 /* delete the multi */
 static void perl_curl_multi_delete(perl_curl_multi *self)
 {
-    dTHX;
 #ifdef __CURL_MULTI_H
     if (self->curlm) 
         curl_multi_cleanup(self->curlm);
@@ -255,7 +249,6 @@ static void perl_curl_multi_delete(perl_curl_multi *self)
 /* make a new share */
 static perl_curl_share * perl_curl_share_new()
 {
-    dTHX;
     perl_curl_share *self;
     Newz(1, self, 1, perl_curl_share);
     self->curlsh=curl_share_init();
@@ -265,7 +258,6 @@ static perl_curl_share * perl_curl_share_new()
 /* delete the share */
 static void perl_curl_share_delete(perl_curl_share *self)
 {
-    dTHX;
     if (self->curlsh) 
         curl_share_cleanup(self->curlsh);
     Safefree(self);
