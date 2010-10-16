@@ -282,6 +282,10 @@ Only used internally, not exposed through the public API.
 
 Not implemented and won't be, as this method is considered deprecated.
 
+=item curl_version
+
+Seems to work.
+
 =item curl_version_info
 
 Not yet implemented.
@@ -297,6 +301,13 @@ This method returns three arrayrefs: the read, write and exception fds libcurl k
 In the case of no file descriptors in the given set, an empty array is returned.
 
 =back
+
+=head1 NUANCES
+
+=head2 Header output for redirects
+
+It might be surprising that if C<CURLOPT_FOLLOWLOCATION> is set and header output was enabled, headers show up for all http responses.
+The reasoning behind that and possible code adjustments are outlined here: L<https://rt.cpan.org/Ticket/Display.html?id=61569>.
 
 =head1 USAGE CASES
 
