@@ -36,6 +36,8 @@ if ($vernum && hex($vernum) <= $minimum_ver) {
 	exit(0);
 }
 
+print "The version is $version\n";
+
 my @includes = qw();
 my ($cflags,$lflags, $ldflags) = ('','','');
 
@@ -109,7 +111,7 @@ if (!defined($curl_h)) {
             my ($option, $value) =
                 m/^#define CURLOPT_(\w+)\s+CURLOPT_(\w+)/;
 	    $constants{CURLOPT_}->{$option} = $value;
-        } elsif ($_ =~ m/^\s*(CURLINFO_|CURLSHOPT_|CURL_LOCK_DATA_|CURLE_|CURL_NETRC_)(\w+)/) {
+        } elsif ($_ =~ m/^\s*(CURLINFO_|CURLSHOPT_|CURLE_|CURL_)(\w+)/) {
 	    $constants{$1}->{$2} = $2;
         } elsif ($_ =~ m/^\s*CURLPROXY_(\w+)\s*=\s*\d+/) {
             $constants{CURLPROXY_}->{$1} = $1;
