@@ -192,7 +192,7 @@ HERE
         if ($line !~ m/^\@CURLOPT_INCLUDE\@/) {
 			print EASY_PM $line;
         } else {
-	for my $group (qw/CURLOPT_ CURLINFO_ CURLE_ CURL_NETRC_ CURLPROXY_/) {
+	for my $group (qw/CURLOPT_ CURLINFO_ CURLE_ CURL_ CURLPROXY_/) {
             for my $option (sort keys %{$constants{$group}}) {
                 next unless $option;
                 print EASY_PM $group.$option."\n";
@@ -214,8 +214,8 @@ HERE
             foreach my $option (sort keys %{$constants{CURLSHOPT_}}) {
                 print SHARE_PM $1 . "CURLSHOPT_".$option . "\n";
             }
-            foreach my $option (sort keys %{$constants{CURL_LOCK_DATA_}}) {
-                print SHARE_PM $1 . "CURL_LOCK_DATA_".$option . "\n";
+            foreach my $option (sort keys %{$constants{CURL_LOCK_}}) {
+                print SHARE_PM $1 . "CURL_LOCK_".$option . "\n";
             }
         }
     }
