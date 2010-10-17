@@ -111,7 +111,9 @@ if (!defined($curl_h)) {
             my ($option, $value) =
                 m/^#define CURLOPT_(\w+)\s+CURLOPT_(\w+)/;
 	    $constants{CURLOPT_}->{$option} = $value;
-        } elsif ($_ =~ m/^\s*(CURLINFO_|CURLSHOPT_|CURLE_|CURL_)(\w+)/) {
+        } elsif ($_ =~ m/^\s*(CURLINFO_|CURLSHOPT_|CURLE_|CURL_LOCK_)(\w+)/) {
+	    $constants{$1}->{$2} = $2;
+        } elsif ($_ =~ m/^\s*(CURL_)(\w+)(?:[,\s]*)(?:\/\*.*)?$/) {
 	    $constants{$1}->{$2} = $2;
         } elsif ($_ =~ m/^\s*CURLPROXY_(\w+)\s*=\s*\d+/) {
             $constants{CURLPROXY_}->{$1} = $1;
