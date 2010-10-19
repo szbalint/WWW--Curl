@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 18;
+use Test::More tests => 19;
 use File::Temp qw/tempfile/;
 
 BEGIN { use_ok( 'WWW::Curl::Easy' ); }
@@ -34,6 +34,7 @@ my @myheaders;
 $myheaders[0] = "Server: www";
 $myheaders[1] = "User-Agent: Perl interface for libcURL";
 ok(! $curl->setopt(CURLOPT_HTTPHEADER, \@myheaders), "Setting CURLOPT_HTTPHEADER");
+ok(! $curl->pushopt(CURLOPT_HTTPHEADER, ["Random: header"]));
 
 $curl->setopt(CURLOPT_COOKIEFILE, "");
 my $retcode = $curl->perform();

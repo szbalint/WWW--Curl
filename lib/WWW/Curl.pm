@@ -308,6 +308,21 @@ In the case of no file descriptors in the given set, an empty array is returned.
 It might be surprising that if C<CURLOPT_FOLLOWLOCATION> is set and header output was enabled, headers show up for all http responses.
 The reasoning behind that and possible code adjustments are outlined here: L<https://rt.cpan.org/Ticket/Display.html?id=61569>.
 
+=head1 ADDITIONAL METHODS
+
+=head2 On WWW::Curl::Easy objects
+
+=over 
+
+=item pushopt
+
+Like C<setopt> but instead of overriding any previously set values it adds it 
+to the end. Can be used with C<CURLOPT_HTTPHEADER>, C<CURLOPT_QUOTE> and 
+C<CURLOPT_POSTQUOTE>.
+
+
+=back
+
 =head1 USAGE CASES
 
 WWW::Curl is a thin binding on top of libcurl, to make using libcurl possible from Perl land.

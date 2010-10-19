@@ -692,10 +692,11 @@ curl_easy_version(...)
         RETVAL
 
 int
-curl_easy_setopt(self, option, value)
+curl_easy_setopt(self, option, value, push=0)
         WWW::Curl::Easy self
         int option
         SV * value
+        int push
     CODE:
         RETVAL=CURLE_OK;
         switch(option) {
@@ -757,7 +758,7 @@ curl_easy_setopt(self, option, value)
                 slist = &(self->slist[slist_index(option)]);
 
                 /* free any previous list */
-                if (*slist) {
+                if (*slist && !push) {
                     curl_slist_free_all(*slist);
                     *slist=NULL;
                 }                                                                       
