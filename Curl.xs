@@ -1107,13 +1107,17 @@ curl_multi_fdset(self)
         fd_set fdexcep;
         int maxfd;
         int i;
+        AV *readset;
+        AV *writeset;
+        AV *excepset;
     PPCODE:
         FD_ZERO(&fdread);
         FD_ZERO(&fdwrite);
         FD_ZERO(&fdexcep);
-        AV *readset = newAV();
-        AV *writeset = newAV();
-        AV *excepset = newAV();
+
+        readset = newAV();
+        writeset = newAV();
+        excepset = newAV();
         curl_multi_fdset(self->curlm, &fdread, &fdwrite, &fdexcep, &maxfd);
         if ( maxfd != -1 ) {
             for (i=0;i <= maxfd;i++) {
