@@ -62,7 +62,7 @@ sub action_wait {
     ok(@{$fds[0]} == 1 || @{$fds[1]} == 1, "The read or write fdset still only contains one fd");
     $curlm->perform;
     @fds = $curlm->fdset;
-    ok( @{$fds[0]} == 2 || @{$fds[1]} == 2, "The read or write fdset contains two fds");
+    ok( @{$fds[0]} + @{$fds[1]} == 2, "The read or write fdset contains two fds");
     while ($curlm->perform) {
         action_wait($curlm);
     }
