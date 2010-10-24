@@ -44,6 +44,11 @@ sub AUTOLOAD {
     return $value;
 }
 
+sub pushopt {
+    my ($self, $option, $value) = @_;
+    $self->setopt($option, $value, 1);
+}
+
 1;
 
 __END__
