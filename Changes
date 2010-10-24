@@ -1,4 +1,12 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
+4.14 Sun Oct 24 2010: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Scalar references can now be used to receive body/header data [gfx].
+    - Speed optimizations for threaded perl. [gfx, szbalint].
+    - Added a more generic libcurl constant detection.
+    - Added the pushopt method for appending strings to array options.
+    - Documentation improvements.
+
 4.13 Wed Sep 01 2010: - Balint Szilakszi <szbalint at cpan.org>
 
     - Fixed WWW::Curl::Form (again, formadd and formaddfile working now).
