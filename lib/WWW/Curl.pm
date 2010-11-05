@@ -70,6 +70,7 @@ Here is a small snippet of making a request with WWW::Curl::Easy.
 		print("An error happened: $retcode ".$curl->strerror($retcode)." ".$curl->errbuf."\n");
 	}
 
+See L<curl_easy_setopt(3)> for details of C<setopt()>.
 
 =head1 WWW::Curl::Multi
 
@@ -398,5 +399,7 @@ pick one of these licenses.
 L<http://curl.haxx.se>
 
 L<http://search.cpan.org/perldoc?WWW::Curl::Simple>
+
+L<libcurl(3)>
 
 The development source code is also available: L<http://github.com/szbalint/WWW--Curl/tree/master>
