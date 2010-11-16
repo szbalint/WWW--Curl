@@ -8,8 +8,6 @@ my $ver_num_raw = WWW::Curl::Easy::version();
 my ($ver_num) = $ver_num_raw =~ m!libcurl/(\d\.\d+\.\d+)!;
 my ($major, $minor, $bugfix) = split(/\./, $ver_num);
 
-diag("major: $major, minor: $minor, bugfix: $bugfix");
-
 open(my $fh, '<', 't/symbols-in-versions') or die($!);
 
 my @consts;
@@ -26,7 +24,7 @@ for my $row (@consts) {
 	my $check = 0;
 	if (!$outro && $intro) {
 		my ($maj_in, $min_in, $bf_in) = split(/\./, $intro);
-		if ($major > $maj_in) {
+		if ($maj_in eq '-' || $major > $maj_in) {
 			$check = 1;	
 		} elsif ($major == $maj_in) {
 			if ($minor > $min_in) { $check = 1
@@ -52,5 +50,5 @@ for my $row (@consts) {
 plan tests => scalar(@checklist);
 for my $row (@checklist) {
 		my $value = WWW::Curl::Easy::constant($row->[0]);
-		ok($value || $row->[1], "$row->[0] is defined alright");
+		ok(!$! && (defined($value) || $row->[1]), "$row->[0] is defined alright - $!");
 }

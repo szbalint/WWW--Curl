@@ -274,7 +274,6 @@ CURLM_BAD_EASY_HANDLE           7.9.6
 CURLM_BAD_HANDLE                7.9.6
 CURLM_BAD_SOCKET                7.15.4
 CURLM_CALL_MULTI_PERFORM        7.9.6
-CURLM_CALL_MULTI_SOCKET         7.15.5
 CURLM_INTERNAL_ERROR            7.9.6
 CURLM_OK                        7.9.6
 CURLM_OUT_OF_MEMORY             7.9.6
@@ -574,9 +573,6 @@ CURL_CHUNK_BGN_FUNC_OK          7.21.0
 CURL_CHUNK_BGN_FUNC_SKIP        7.21.0
 CURL_CHUNK_END_FUNC_FAIL        7.21.0
 CURL_CHUNK_END_FUNC_OK          7.21.0
-CURL_CSELECT_ERR                7.16.3
-CURL_CSELECT_IN                 7.16.3
-CURL_CSELECT_OUT                7.16.3
 CURL_ERROR_SIZE                 7.1
 CURL_FNMATCHFUNC_FAIL           7.21.0
 CURL_FNMATCHFUNC_MATCH          7.21.0
@@ -614,11 +610,6 @@ CURL_MAX_WRITE_SIZE             7.9.7
 CURL_NETRC_IGNORED              7.9.8
 CURL_NETRC_OPTIONAL             7.9.8
 CURL_NETRC_REQUIRED             7.9.8
-CURL_POLL_IN                    7.14.0
-CURL_POLL_INOUT                 7.14.0
-CURL_POLL_NONE                  7.14.0
-CURL_POLL_OUT                   7.14.0
-CURL_POLL_REMOVE                7.14.0
 CURL_READFUNC_ABORT             7.12.1
 CURL_READFUNC_PAUSE             7.18.0
 CURL_REDIR_GET_ALL              7.19.1
@@ -641,7 +632,6 @@ CURL_SEEKFUNC_CANTSEEK          7.19.5
 CURL_SEEKFUNC_FAIL              7.19.5
 CURL_SEEKFUNC_OK                7.19.5
 CURL_SOCKET_BAD                 7.14.0
-CURL_SOCKET_TIMEOUT             7.14.0
 CURL_SSLVERSION_DEFAULT         7.9.2
 CURL_SSLVERSION_SSLv2           7.9.2
 CURL_SSLVERSION_SSLv3           7.9.2
