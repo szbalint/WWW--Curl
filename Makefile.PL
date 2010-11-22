@@ -99,18 +99,21 @@ if (!defined($curl_h)) {
      $curl_d = "-I" . $curl_d;
      print "Found curl.h in $curl_h\n";
      my @syms;
-     if (open(H_IN, "-|", "cpp", $curl_h)) {
+     my $has_cpp = 0;
+     open(H_IN, "-|", "cpp", $curl_h) and $has_cpp++;
+     unless ($has_cpp) { open(H_IN, "<", $curl_h) or die("Can't open curl.h at path $curl_h, because: ".$!); }
      while ( <H_IN> ) {
          if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
              s/^\s+//;
              next unless /^CURL/;
              chomp;
              s/[,\s].*//;
+             next unless /^\w+$/;
              push @syms, $_;
          }
     }
     close H_IN;
-    open H, "<", $curl_h;
+    open (H, "<", $curl_h) or die ("Cannot open $curl_h: ".$!);
     while(<H>) {
         if (/^#define (CURL[A-Za-z0-9_]*)/) {
             push @syms, $1;
@@ -125,12 +128,11 @@ if (!defined($curl_h)) {
        my ($group) = $e =~ m/^([^_]+_)/;
        $constants{$group}->{$e} = $e;
     }
-    } else {
+    unless ($has_cpp) {
     open(CURL_H, "<" . $curl_h) or die "Can't open curl.h\n";
     while (<CURL_H>) {
         if ($_ =~ m/CINIT\(/ and $_ !~ m/#/) {
-            my ($option, $type, $code) =
-                m/.*CINIT\((\w*)\s*,\s*(\w+)\s*,\s*(\d+).*/;
+            my ($option, $type, $code) = m/.*CINIT\((\w*)\s*,\s*(\w+)\s*,\s*(\d+).*/;
 	    $constants{"CURLOPT_"}->{"CURLOPT_".$option} = "CURLOPT_".$option;
 	} elsif ($_ =~ m/^#define CURLOPT_\w+\s+CURLOPT_\w+/) {
             my ($option, $value) =
@@ -140,12 +142,12 @@ if (!defined($curl_h)) {
 	    $constants{$2}->{$1}= $1;
         } elsif ($_ =~ m/^\s*((CURL_)(?:\w+))(?:[,\s]*)(?:\/\*.*)?$/) {
 	    $constants{$2}->{$1} = $1;
-        } elsif ($_ =~ m/^#define ((CURL[A-Za-z0-9]*_)[A-Za-z0-9_]*)/) {
-	    $constants{$2}->{$1} = $1;
         } elsif ($_ =~ m/^\s*((CURLPROXY_)(?:\w+))\s*=\s*\d+/) {
             $constants{$2}->{$1} = $1;
+        } elsif ($_ =~ m/CFINIT\(/ and $_ !~ m/#/) {
+            my ($option) = m/.*CFINIT\((\w*)\s*.*/;
+	    $constants{"CURLFORM_"}->{"CURLFORM_".$option} = "CURLFORM_".$option;
         }
-
     }
     close(CURL_H);
     }
