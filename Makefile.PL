@@ -41,9 +41,6 @@ print "The version is $version\n";
 my @includes = qw();
 my ($cflags,$lflags, $ldflags) = ('','','');
 
-# This utility helper generates the constants function from curl.h
-# It is normally only used by the maintainer, but if you're curl is older
-# or missing some constants, you can delete curlopt-constants.c and re-run 'perl Makefile.PL'
 # You may need to specify where to find curl.h on your platform
 # These are guesses only, in case curl-config is not telling us.
 
@@ -96,37 +93,62 @@ foreach my $try (@includes) {
 }
 
 if (!defined($curl_h)) {
-    die "Cannot find curl.h - cannot build constants files  - see Makefile.PL";
+     die "Cannot find curl.h - cannot build constants files  - see Makefile.PL";
 } else {
-    $curl_d = "-I" . $curl_d;
-    print "Found curl.h in $curl_h\n";
+     my %constants;
+     $curl_d = "-I" . $curl_d;
+     print "Found curl.h in $curl_h\n";
+     my @syms;
+     if (0 && open(H_IN, "-|", "cpp", $curl_h)) {
+     while ( <H_IN> ) {
+         if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
+             s/^\s+//;
+             next unless /^CURL/;
+             chomp;
+             s/[,\s].*//;
+             push @syms, $_;
+         }
+    }
+    close H_IN;
+    open H, "<", $curl_h;
+    while(<H>) {
+        if (/^#define (CURL[A-Za-z0-9_]*)/) {
+            push @syms, $1;
+        }
+    }
+    close H;
+
+    for my $e (sort @syms) {
+       if($e =~ /(OBSOLETE|^CURL_EXTERN|_LAST\z|_LASTENTRY\z)/) {
+          next;
+       }
+       my ($group) = $e =~ m/^([^_]+_)/;
+       $constants{$group}->{$e} = $e;
+    }
+    } else {
     open(CURL_H, "<" . $curl_h) or die "Can't open curl.h\n";
-    my %constants;
     while (<CURL_H>) {
         if ($_ =~ m/CINIT\(/ and $_ !~ m/#/) {
             my ($option, $type, $code) =
                 m/.*CINIT\((\w*)\s*,\s*(\w+)\s*,\s*(\d+).*/;
-	    $constants{CURLOPT_}->{$option} = $option;
+	    $constants{"CURLOPT_"}->{"CURLOPT_".$option} = "CURLOPT_".$option;
 	} elsif ($_ =~ m/^#define CURLOPT_\w+\s+CURLOPT_\w+/) {
             my ($option, $value) =
                 m/^#define CURLOPT_(\w+)\s+CURLOPT_(\w+)/;
-	    $constants{CURLOPT_}->{$option} = $value;
-        } elsif ($_ =~ m/^\s*(CURLINFO_|CURLSHOPT_|CURLE_|CURL_LOCK_)(\w+)/) {
-	    $constants{$1}->{$2} = $2;
-        } elsif ($_ =~ m/^\s*(CURL_)(\w+)(?:[,\s]*)(?:\/\*.*)?$/) {
-	    $constants{$1}->{$2} = $2;
-        } elsif ($_ =~ m/^\s*CURLPROXY_(\w+)\s*=\s*\d+/) {
-            $constants{CURLPROXY_}->{$1} = $1;
+	    $constants{"CURLOPT_"}->{"CURLOPT_".$option} = "CURLOPT_".$value;
+        } elsif ($_ =~ m/^\s*((CURLINFO_|CURLSHOPT_|CURLE_)\w+)/) {
+	    $constants{$2}->{$1}= $1;
+        } elsif ($_ =~ m/^\s*((CURL_)(?:\w+))(?:[,\s]*)(?:\/\*.*)?$/) {
+	    $constants{$2}->{$1} = $1;
+        } elsif ($_ =~ m/^#define ((CURL[A-Za-z0-9]*_)[A-Za-z0-9_]*)/) {
+	    $constants{$2}->{$1} = $1;
+        } elsif ($_ =~ m/^\s*((CURLPROXY_)(?:\w+))\s*=\s*\d+/) {
+            $constants{$2}->{$1} = $1;
         }
 
     }
     close(CURL_H);
-
-    # some things are ifdefed out...
-    foreach my $ifdef0 (qw(FLAGS PROGRESSMODE MOREDOCS)) {
-        delete $constants{CURLOPT_}->{$ifdef0};
     }
-
     print "Building curlopt-constants.c for your libcurl version\n";
 
     open(CURL_XS, ">curlopt-constants.c")
@@ -140,7 +162,7 @@ constant(const char *name)
     errno = 0;
 HERE
         ;
-for my $group (sort keys %constants) {
+for my $group (reverse sort keys %constants) {
 	my $grouplength = length($group);
 	my $groupref = $constants{$group};
 	my @constants = keys %{$constants{$group}};
@@ -156,11 +178,12 @@ HERE2
         print CURL_XS "        case '$next_initial':\n";
         my $count = 0;
         foreach my $option (sort @constants) {
-            my $initial = substr($option, 0, 1);
+            my $remainder = substr($option, length($group), length($option));
+            my $initial = substr($remainder, 0, 1);
             if ($next_initial eq $initial) {
 
                 print CURL_XS
-"            if (strEQ(name, \"$option\")) return $group"."$groupref->{$option};\n";
+"            if (strEQ(name, \"$remainder\")) return "."$groupref->{$option};\n";
 
                 $count++;
             }
@@ -192,10 +215,10 @@ HERE
         if ($line !~ m/^\@CURLOPT_INCLUDE\@/) {
 			print EASY_PM $line;
         } else {
-	for my $group (qw/CURLOPT_ CURLINFO_ CURLE_ CURL_ CURLPROXY_/) {
+	for my $group (reverse sort keys %constants) {	
             for my $option (sort keys %{$constants{$group}}) {
                 next unless $option;
-                print EASY_PM $group.$option."\n";
+                print EASY_PM $option."\n";
             }
         }
 	}
@@ -212,10 +235,10 @@ HERE
             print SHARE_PM $line;
         } else {
             foreach my $option (sort keys %{$constants{CURLSHOPT_}}) {
-                print SHARE_PM $1 . "CURLSHOPT_".$option . "\n";
+                print SHARE_PM $1 . $option . "\n";
             }
             foreach my $option (sort keys %{$constants{CURL_LOCK_}}) {
-                print SHARE_PM $1 . "CURL_LOCK_".$option . "\n";
+                print SHARE_PM $1 . $option . "\n";
             }
         }
     }
