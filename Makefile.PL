@@ -99,7 +99,7 @@ if (!defined($curl_h)) {
      $curl_d = "-I" . $curl_d;
      print "Found curl.h in $curl_h\n";
      my @syms;
-     if (0 && open(H_IN, "-|", "cpp", $curl_h)) {
+     if (open(H_IN, "-|", "cpp", $curl_h)) {
      while ( <H_IN> ) {
          if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
              s/^\s+//;
