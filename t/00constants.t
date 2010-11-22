@@ -18,6 +18,11 @@ for my $row (<$fh>) {
 	push @consts, [$name, $intro, $dep, $remov];
 }
 
+# In case we can't use cpp to extract symbols, skipping the multi constant tests for now.
+my $skip_multi;
+my $value = WWW::Curl::Easy::constant('CURL_LAST');
+$skip_multi++ if (! $!);
+
 my @checklist;
 for my $row (@consts) {
 	my ($name, $intro, $depr, $outro) = @{$row};
@@ -44,6 +49,7 @@ for my $row (@consts) {
 		}
 	}
 	if ($check) {
+		next if ($skip_multi && $name =~ m/^CURLM/);
 		push @checklist, [$name, $depr];
 	}
 }
