@@ -19,8 +19,8 @@ sub AUTOLOAD {
 
     ( my $constname = $AUTOLOAD ) =~ s/.*:://;
     my $value = constant( $constname );
-    if($!) {
-        croak("Undefined subroutine &$AUTOLOAD failed");
+    if ($!) {
+        croak("Undefined subroutine &$AUTOLOAD failed for reasons of $!, constname was $constname, value was: $value");
     }
 
     {
