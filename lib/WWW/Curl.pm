@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use XSLoader;
 
-our $VERSION = '4.14';
+our $VERSION = '4.15';
 XSLoader::load(__PACKAGE__, $VERSION);
 
 END {

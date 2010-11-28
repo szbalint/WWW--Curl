@@ -1,4 +1,9 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
+4.15 Sun Nov 28 2010: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Refactored constant handling and added thorough testing for it.
+    - Fixed CURLOPT_PRIVATE, it is now a string and can be set/get accordingly.
+
 4.14 Sun Oct 24 2010: - Balint Szilakszi <szbalint at cpan.org>
 
     - Scalar references can now be used to receive body/header data [gfx].
