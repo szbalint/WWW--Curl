@@ -108,6 +108,7 @@ if (!defined($curl_h)) {
              next unless /^CURL/;
              chomp;
              s/[,\s].*//;
+             s/=.*$//;
              next unless /^\w+$/;
              push @syms, $_;
          }
