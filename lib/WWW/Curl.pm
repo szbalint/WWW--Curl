@@ -309,6 +309,10 @@ In the case of no file descriptors in the given set, an empty array is returned.
 It might be surprising that if C<CURLOPT_FOLLOWLOCATION> is set and header output was enabled, headers show up for all http responses.
 The reasoning behind that and possible code adjustments are outlined here: L<https://rt.cpan.org/Ticket/Display.html?id=61569>.
 
+=head2 CURLOPT_PRIVATE
+
+Despite what the libcurl manual says, in Perl land, only string values are suitable for this option.
+
 =head1 ADDITIONAL METHODS
 
 =head2 On WWW::Curl::Easy objects
