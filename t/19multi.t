@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 16;
+use Test::More tests => 20;
 use WWW::Curl::Easy;
 use WWW::Curl::Multi;
 use File::Temp qw/tempfile/;
@@ -38,11 +38,13 @@ sub action_wait {
     $curl->setopt( CURLOPT_URL, $url);
     ok(! $curl->setopt(CURLOPT_WRITEHEADER, $header), "Setting CURLOPT_WRITEHEADER");
     ok(! $curl->setopt(CURLOPT_WRITEDATA,$body), "Setting CURLOPT_WRITEDATA");
+    ok(! $curl->setopt(CURLOPT_PRIVATE,"foo"), "Setting CURLOPT_PRIVATE");
 
     my $curl2 = new WWW::Curl::Easy;
     $curl2->setopt( CURLOPT_URL, $url);
     ok(! $curl2->setopt(CURLOPT_WRITEHEADER, $header2), "Setting CURLOPT_WRITEHEADER");
     ok(! $curl2->setopt(CURLOPT_WRITEDATA,$body2), "Setting CURLOPT_WRITEDATA");
+    ok(! $curl2->setopt(CURLOPT_PRIVATE,42), "Setting CURLOPT_PRIVATE");
 
     my $curlm = new WWW::Curl::Multi;
     my @fds = $curlm->fdset;
@@ -63,7 +65,15 @@ sub action_wait {
     $curlm->perform;
     @fds = $curlm->fdset;
     ok( @{$fds[0]} + @{$fds[1]} == 2, "The read or write fdset contains two fds");
-    while ($curlm->perform) {
+    my $active = 2;
+    while ($active != 0) {
+	my $ret = $curlm->perform;
+	if ($ret != $active) {
+		while (my ($id,$value) = $curlm->info_read) {
+			ok($id eq "foo" || $id == 42, "The stored private value matches what we set");
+		}
+		$active = $ret;
+	}
         action_wait($curlm);
     }
     @fds = $curlm->fdset;

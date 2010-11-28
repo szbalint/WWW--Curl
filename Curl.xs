@@ -814,10 +814,6 @@ curl_easy_setopt(self, option, value, push=0)
 		    croak("value is not of type WWW::Curl::Share"); 
 		break;
 #endif
-            case CURLOPT_PRIVATE:
-                    RETVAL = curl_easy_setopt(self->curl, option, (long)SvIV(value));
-                break;
-
             /* default cases */
             default:
                 if (option < CURLOPTTYPE_OBJECTPOINT) { /* A long (integer) value */
@@ -1078,7 +1074,7 @@ curl_multi_info_read(self)
     PREINIT:
     	CURL *easy = NULL;
     	CURLcode res;
-    	long stashid;
+    	char *stashid;
 	int queue;
     	CURLMsg *msg;
     PPCODE:
@@ -1093,7 +1089,7 @@ curl_multi_info_read(self)
 		curl_easy_getinfo(easy, CURLINFO_PRIVATE, &stashid);
 		curl_easy_setopt(easy, CURLINFO_PRIVATE, NULL);
 		curl_multi_remove_handle(self->curlm, easy);
-		XPUSHs(sv_2mortal(newSViv(stashid)));
+		XPUSHs(sv_2mortal(newSVpv(stashid,0)));
 		XPUSHs(sv_2mortal(newSViv(res)));
 	} else {
 		XSRETURN_EMPTY;
