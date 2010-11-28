@@ -53,6 +53,7 @@ t/new/10multi-callback.t
 t/new/README
 t/pod-coverage.t
 t/pod.t
+t/symbols-in-versions
 template/Easy.pm.tmpl
 template/Share.pm.tmpl
 typemap
