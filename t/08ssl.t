@@ -28,7 +28,7 @@ my $url_list=[
 ];
 
 
-if (&WWW::Curl::Easy::version() !~ /ssl|nss/i) {
+if (&WWW::Curl::Easy::version() !~ /ssl|nss|gnutls/i) {
 	plan skip_all => 'libcurl was compiled without ssl support, skipping ssl tests';
 } else {
 	plan tests => scalar(@{$url_list})+7;
