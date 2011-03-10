@@ -16,6 +16,12 @@ if ( $^O eq 'MSWin32' ) {
 
 
 my $constant_names = get_constants( $curl_d . "/curl/curl.h" );
+{
+	my $cn = scalar @$constant_names;
+	# there are 622 constants in libcurl 7.21.4
+	die "Found $cn constants, there should be at least 500\n"
+		if $cn < 500;
+}
 my @constant_names = divide_constants();
 
 write_from_template( "Easy", $constant_names[ 0 ] );
