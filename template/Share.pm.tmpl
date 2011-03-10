@@ -8,27 +8,18 @@ use WWW::Curl ();
 use Exporter  ();
 
 our @ISA = qw(Exporter);
+our @EXPORT;
 
-our @EXPORT = qw(
-@CURLSHOPT_INCLUDE@
-);
+BEGIN {
+	@EXPORT = qw(
+@CURLOPT_INCLUDE@
+	);
 
-sub AUTOLOAD {
-    our $AUTOLOAD;
-    # This AUTOLOAD is used to 'autoload' constants from the constant()
-    # XS function.
-
-    ( my $constname = $AUTOLOAD ) =~ s/.*:://;
-    my $value = constant( $constname );
-    if ($!) {
-        croak("Undefined subroutine &$AUTOLOAD failed for reasons of $!, constname was $constname, value was: $value");
-    }
-
-    {
-        no strict 'refs';
-        *{$AUTOLOAD} = sub { $value };
-    }
-    return $value;
+	# link exported constants
+	no strict 'refs';
+	foreach my $name ( @EXPORT ) {
+		*$name = \*{"WWW::Curl::" . $name};
+	}
 }
 
 1;

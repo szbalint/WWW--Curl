@@ -10,39 +10,46 @@ use WWW::Curl ();
 use Exporter  ();
 
 our @ISA = qw(Exporter);
+our @EXPORT;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-our @EXPORT = qw(
+BEGIN {
+	@EXPORT = qw(
 @CURLOPT_INCLUDE@
-);
+	);
+
+	# link exported constants
+	no strict 'refs';
+	foreach my $name ( @EXPORT ) {
+		*$name = \*{"WWW::Curl::" . $name};
+	}
+}
 
 $WWW::Curl::Easy::headers = "";
 $WWW::Curl::Easy::content = "";
 
 sub const_string {
 	my ($self, $constant) = @_;
-	return constant($constant);
+	return constant( $constant );
 }
 
-sub AUTOLOAD {
-    our $AUTOLOAD;
-    # This AUTOLOAD is used to 'autoload' constants from the constant()
-    # XS function.
-
-    ( my $constname = $AUTOLOAD ) =~ s/.*:://;
-    my $value = constant( $constname );
-    if($!) {
-        croak("Undefined subroutine &$AUTOLOAD called");
-    }
-
-    {
-        no strict 'refs';
-        *{$AUTOLOAD} = sub { $value };
-    }
-    return $value;
+sub constant {
+	my $constant = shift;
+	my $ret = undef;
+	local $@;
+	eval {
+		no strict 'refs';
+		$ret = &{"WWW::Curl::".$constant};
+	};
+	$! = 0;
+	if ( $@ ) {
+		require POSIX;
+		$! = POSIX::EINVAL();
+	}
+	return $ret;
 }
 
 sub pushopt {
