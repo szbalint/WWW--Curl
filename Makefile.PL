@@ -1,260 +1,187 @@
-# Makefile.PL for Perl module WWW::Curl
-# Check out the README file for more information.
+use ExtUtils::MakeMaker;
+use ExtUtils::MakeMaker::Config;
+use ExtUtils::Constant 0.11 'WriteConstants';
 
-use inc::Module::Install;
+my $minimum_libcurl_ver = 0x070a08;
 
-name			'WWW-Curl';
-abstract		'Perl extension interface for libcurl';
-author			'Cris Bailiff <c.bailiff+curl at devsecure.com>';
-license			'MPL or MIT/X-derivate';
-perl_version		'5.006001';
-no_index		directory => 'template';
-repository		'http://github.com/szbalint/WWW--Curl';
-# This is a hack. If you have libcurl installed, just specify curl.h below
-# and comment out this line.
-if ($^O ne 'MSWin32') {
-    if (!$ENV{CURL_CONFIG}) {
-	    requires_external_bin	'curl-config';
-    }
-} else {
+my ( $curl_d, $cflags, $libs ) = ('', '', '');
+
+if ( $^O eq 'MSWin32' ) {
 	print	"Sorry, no automated install is available on Windows,\n".
 		"please see the README.Win32 file on instructions for a manual install.\n";
-	exit(0);
-}
-
-my $curl_config = $ENV{CURL_CONFIG} || 'curl-config';
-
-my $vernum = `${curl_config} --vernum`; chomp $vernum;
-my $version = `${curl_config} --version`; chomp $version; 
-
-my $minimum_ver = hex("070a08");
-
-if ($vernum && hex($vernum) <= $minimum_ver) {
-	print	"Your currently installed libcurl version - $version - is too old.\n".
-		"This module doesn't seek compatibility with versions older than 7.10.8\n".
-		"Proceed manually if you know what you're doing.\n";
-	exit(0);
-}
-
-print "The version is $version\n";
-
-my @includes = qw();
-my ($cflags,$lflags, $ldflags) = ('','','');
-
-# You may need to specify where to find curl.h on your platform
-# These are guesses only, in case curl-config is not telling us.
-
-if ($^O ne 'MSWin32') {
-	push @includes, qw(
-		/usr/include
-		/usr/local/curl/include
-		/usr/local/include/curl
-		../../include
-		../curl/include
-	);
-}
-
-#
-# Get curl to tell us where it is, if we can.
-#
-
-if ($^O ne 'MSWin32') {
-	$cflags = `${curl_config} --cflags`;
-	$lflags = `${curl_config} --libs`;
-}
-
-# can't find link flags, make some guesses
-if (!defined($lflags)) {
-    $lflags="-lcurl";
-    print "Guessing your linker flags as: $lflags\n";
-}
-
-my ($flag) = ($cflags =~ m/-I(\S+)/);
-
-if (defined $flag) {
-    unshift @includes, $flag;    # first guess
-}
-
-# try the path given on the command line, if any
-if (defined($ARGV[0])) {
-    unshift @includes, $ARGV[0];
-};
-
-my $curl_d = "";
-my $curl_h;
-
-# otherwise try a list of common locations
-foreach my $try (@includes) {
-    if (-f $try . "/curl/curl.h") {
-        $curl_d = $try;
-        $curl_h = $try . "/curl/curl.h";
-        last;
-    }
-}
-
-if (!defined($curl_h)) {
-     die "Cannot find curl.h - cannot build constants files  - see Makefile.PL";
+	exit 0;
 } else {
-     my %constants;
-     $curl_d = "-I" . $curl_d;
-     print "Found curl.h in $curl_h\n";
-     my @syms;
-     my $has_cpp = 0;
-     open(H_IN, "-|", "cpp", $curl_h) and $has_cpp++;
-     unless ($has_cpp) { open(H_IN, "<", $curl_h) or die("Can't open curl.h at path $curl_h, because: ".$!); }
-     while ( <H_IN> ) {
-         if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
-             s/^\s+//;
-             next unless /^CURL/;
-             chomp;
-             s/[,\s].*//;
-             s/=.*$//;
-             next unless /^\w+$/;
-             push @syms, $_;
-         }
-    }
-    close H_IN;
-    open (H, "<", $curl_h) or die ("Cannot open $curl_h: ".$!);
-    while(<H>) {
-        if (/^#define (CURL[A-Za-z0-9_]*)/) {
-            push @syms, $1;
-        }
-    }
-    close H;
-
-    for my $e (sort @syms) {
-       if($e =~ /(OBSOLETE|^CURL_EXTERN|_LAST\z|_LASTENTRY\z)/) {
-          next;
-       }
-       my ($group) = $e =~ m/^([^_]+_)/;
-       $constants{$group}->{$e} = $e;
-    }
-    unless ($has_cpp) {
-    open(CURL_H, "<" . $curl_h) or die "Can't open curl.h\n";
-    while (<CURL_H>) {
-        if ($_ =~ m/CINIT\(/ and $_ !~ m/#/) {
-            my ($option, $type, $code) = m/.*CINIT\((\w*)\s*,\s*(\w+)\s*,\s*(\d+).*/;
-	    $constants{"CURLOPT_"}->{"CURLOPT_".$option} = "CURLOPT_".$option;
-	} elsif ($_ =~ m/^#define CURLOPT_\w+\s+CURLOPT_\w+/) {
-            my ($option, $value) =
-                m/^#define CURLOPT_(\w+)\s+CURLOPT_(\w+)/;
-	    $constants{"CURLOPT_"}->{"CURLOPT_".$option} = "CURLOPT_".$value;
-        } elsif ($_ =~ m/^\s*((CURLINFO_|CURLSHOPT_|CURLE_)\w+)/) {
-	    $constants{$2}->{$1}= $1;
-        } elsif ($_ =~ m/^\s*((CURL_)(?:\w+))(?:[,\s]*)(?:\/\*.*)?$/) {
-	    $constants{$2}->{$1} = $1;
-        } elsif ($_ =~ m/^\s*((CURLPROXY_)(?:\w+))\s*=\s*\d+/) {
-            $constants{$2}->{$1} = $1;
-        } elsif ($_ =~ m/CFINIT\(/ and $_ !~ m/#/) {
-            my ($option) = m/.*CFINIT\((\w*)\s*.*/;
-	    $constants{"CURLFORM_"}->{"CURLFORM_".$option} = "CURLFORM_".$option;
-        }
-    }
-    close(CURL_H);
-    }
-    print "Building curlopt-constants.c for your libcurl version\n";
-
-    open(CURL_XS, ">curlopt-constants.c")
-        or die "Can't write curlopt-constants.c\n";
-
-    # boilerplate xs constant function here
-    print CURL_XS <<HERE
-static int
-constant(const char *name)
-{
-    errno = 0;
-HERE
-        ;
-for my $group (reverse sort keys %constants) {
-	my $grouplength = length($group);
-	my $groupref = $constants{$group};
-	my @constants = keys %{$constants{$group}};
-	print CURL_XS <<HERE2
-
-    if (strncmp(name, "$group", $grouplength) == 0) {
-        name += $grouplength;
-        switch (*name) {
-HERE2
-        ;
-
-    for my $next_initial ('A' .. 'Z') {
-        print CURL_XS "        case '$next_initial':\n";
-        my $count = 0;
-        foreach my $option (sort @constants) {
-            my $remainder = substr($option, length($group), length($option));
-            my $initial = substr($remainder, 0, 1);
-            if ($next_initial eq $initial) {
-
-                print CURL_XS
-"            if (strEQ(name, \"$remainder\")) return "."$groupref->{$option};\n";
-
-                $count++;
-            }
-        }
-        if ($count or $next_initial eq 'Z') {
-            print CURL_XS "            break;\n";
-        }
-    }
-
-    print CURL_XS "    };\n";
-    print CURL_XS "    }\n";
+	( $curl_d, $cflags, $libs ) = get_curl_config();
 }
 
-    print CURL_XS <<HERE
 
-    errno = EINVAL;
-    return 0;
-}
-HERE
-        ;
+my $constant_names = get_constants( $curl_d . "/curl/curl.h" );
+my @constant_names = divide_constants();
 
-    close(CURL_XS);
+write_from_template( "Easy", $constant_names[ 0 ] );
+write_from_template( "Share", $constant_names[ 1 ] );
+write_from_template( "Form", $constant_names[ 2 ] );
 
-    print "Building Easy.pm constants for your libcurl version\n";
-
-    open(EASY_PM,    ">lib/WWW/Curl/Easy.pm")    or die "Can't create lib/WWW/Curl/Easy.pm\n";
-    open(EASY_PM_IN, "template/Easy.pm.tmpl") or die "Can't read template/Easy.pm.tmpl\n";
-    while (my $line = <EASY_PM_IN>) {
-        if ($line !~ m/^\@CURLOPT_INCLUDE\@/) {
-			print EASY_PM $line;
-        } else {
-	for my $group (reverse sort keys %constants) {	
-            for my $option (sort keys %{$constants{$group}}) {
-                next unless $option;
-                print EASY_PM $option."\n";
-            }
-        }
-	}
-    }
-    close(EASY_PM);
-    close(EASY_PM_IN);
-
-	print "Building Share.pm constants for your libcurl version\n";
-
-    open(SHARE_PM,   ">lib/WWW/Curl/Share.pm")    or die "Can't create lib/WWW/Curl/Share.pm\n";
-    open(SHARE_PM_IN, "template/Share.pm.tmpl") or die "Can't read template/Share.pm.tmpl\n";
-    while (my $line = <SHARE_PM_IN>) {
-        if ($line !~ m/^(.*?)\@CURLSHOPT_INCLUDE\@/) {
-            print SHARE_PM $line;
-        } else {
-            foreach my $option (sort keys %{$constants{CURLSHOPT_}}) {
-                print SHARE_PM $1 . $option . "\n";
-            }
-            foreach my $option (sort keys %{$constants{CURL_LOCK_}}) {
-                print SHARE_PM $1 . $option . "\n";
-            }
-        }
-    }
-    close(SHARE_PM);
-    close(SHARE_PM_IN);
-}
-
-# Let Module::Install generate META.yml and other necessary files.
 WriteMakefile(
-    'NAME'         => 'WWW::Curl',
-    'VERSION_FROM' => 'lib/WWW/Curl.pm',      # finds $VERSION
-    'LIBS'         => "$ldflags $lflags",        # e.g., '-lm'
-    'INC'          => $curl_d,        # e.g., '-I/usr/include/other'
-    'clean' => { FILES => "curlopt-constants.c head.out body.out" }
+	NAME 		=> 'WWW::Curl',
+	VERSION_FROM	=> 'lib/WWW/Curl.pm',
+	ABSTRACT_FROM	=> 'lib/WWW/Curl.pm',
+	AUTHOR		=> 'Cris Bailiff <c.bailiff+curl at devsecure.com>, ' .
+				'Balint Szilakszi <szbalint at cpan.org>',
+	CCFLAGS		=> $cflags,
+	LIBS		=> $libs,
+	SIGN		=> 1,
+	LICENSE		=> 'MPL or MIT/X-derivate',	
+	MIN_PERL_VERSION => 5.006001,
+	clean		=> {
+		FILES => 'const-c.inc const-xs.inc const-defenums.h'
+	},
 );
 
+# WriteConstants does not honour enums, so we define those symbols
+write_defenums( "const-defenums.h" );
+WriteConstants(
+	($] > 5.009002 ? (PROXYSUBS => 1) : ()),
+	NAME => 'WWW::Curl',
+	NAMES => $constant_names,
+);
+
+sub get_curl_config
+{
+	my $curl_config = $ENV{CURL_CONFIG} || 'curl-config';
+	my %cc;
+	foreach my $opt ( qw(vernum version prefix cflags libs) ) {
+		my $ret = `${curl_config} --$opt`;
+		chomp $ret;
+		$cc{ $opt } = $ret;
+		# print "${curl_config} --$opt: $ret\n";
+	}
+
+	print "Found libcurl version $cc{version}\n";
+	
+	if ( $cc{vernum} and hex( $cc{vernum} ) < $minimum_libcurl_ver) {
+		print
+			"Your currently installed libcurl version - $cc{version} - is too old.\n".
+			"This module doesn't seek compatibility with versions older than 7.10.8\n".
+			"Proceed manually if you know what you're doing.\n";
+		exit 0;
+	}
+
+	my @incpath = (
+		( defined $curl_d ? $curl_d : () ),
+		( $cc{cflags} =~ /-I(\S+)/g ),
+		( "$cc{prefix}/include" ),
+		( split /\s+/, $Config{usrinc} ),
+		( split /\s+/, $Config{locincpth} ),
+		qw(
+		/usr/include
+		/usr/local/include
+		/usr/local/curl/include
+		/usr/local/include/curl
+		)
+	);
+
+	my $curl_d;
+	foreach my $inc ( @incpath ) {
+		if ( -f $inc . "/curl/curl.h") {
+			$curl_d = $inc;
+			last;
+		}
+	}
+
+	die "Cannot find curl.h - cannot build constants files  - see Makefile.PL"
+		unless defined $curl_d;
+
+	$cc{libs} ||= "-lcurl";
+	return ( $curl_d, $cc{cflags}, $cc{libs} );
+}
+
+sub get_constants
+{
+	my $curl_h = shift;
+	
+	print "Reading $curl_h\n";
+	my %syms;
+	open( H_IN, "-|", "$Config{cpprun} $curl_h" )
+		or die "Cannot run $Config{cpprun} $curl_h: $@\n";
+	while ( <H_IN> ) {
+		if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
+			s/^\s+//;
+			next unless /^CURL/;
+			chomp;
+			s/[,\s].*//;
+			s/=.*$//;
+			next unless /^\w+$/;
+			$syms{ $_ } = 1;
+		}
+	}
+	close H_IN;
+
+	open (H, "<", $curl_h)
+		or die "Cannot open $curl_h: ".$!;
+	while(<H>) {
+		if (/^#define (CURL[A-Za-z0-9_]*)/) {
+			$syms{ $1 } = 1;
+		}
+	}
+	close H;
+
+	my @out;
+	foreach my $e (sort keys %syms) {
+		if($e =~ /(OBSOLETE|^CURL_EXTERN|_LAST\z|_LASTENTRY\z)/) {
+			next;
+		}
+		push @out, $e;
+	}
+
+	\@out;
+}
+
+sub divide_constants
+{
+	my @out = ( [], [], [] );
+
+	foreach ( @$constant_names ) {
+		my $list = 0;
+		$list = 1 if /^CURLSHOPT_/;
+		$list = 2 if /^CURLFORM_/;
+		push @{ $out[ $list ] }, $_;
+	}
+	return @out;
+}
+
+sub write_from_template
+{
+	my $name = shift;
+	my $constants = shift;
+
+	print "Writing lib/WWW/Curl/$name.pm from template/$name.pm.tmpl\n";
+	open my $fout, ">", "lib/WWW/Curl/$name.pm"
+		or die "Can't create lib/WWW/Curl/$name.pm\n";
+
+	open my $fin, "<", "template/$name.pm.tmpl"
+		or die "Can't read template/$name.pm.tmpl\n";
+
+	local $_;
+	while (<$fin>) {
+		if (m/^\s*\@CURLOPT_INCLUDE\@/) {
+			print $fout join "\n", @$constants, '';
+		} else {
+			print $fout $_;
+		}
+	}
+}
+
+sub write_defenums
+{
+	my $out = shift;
+
+	print "Writing $out\n";
+	open my $o, ">", $out;
+	foreach ( @$constant_names ) {
+		print $o "#ifndef $_\n";
+		print $o "# define $_ $_\n";
+		print $o "#endif\n";
+	}
+	close $o;
+}
