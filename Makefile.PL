@@ -36,6 +36,9 @@ WriteMakefile(
 	clean		=> {
 		FILES => 'const-c.inc const-xs.inc const-defenums.h'
 	},
+	realclean	=> {
+		FILES => 'lib/WWW/Curl/Easy.pm lib/WWW/Curl/Form.pm lib/WWW/Curl/Share.pm'
+	},
 );
 
 # WriteConstants does not honour enums, so we define those symbols
