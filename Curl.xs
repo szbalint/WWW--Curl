@@ -564,7 +564,8 @@ closepolicy_callback_func(void *clientp)
 }
 #endif
 
-#include "curlopt-constants.c"
+#include "const-defenums.h"
+#include "const-c.inc"
 
 typedef perl_curl_easy * WWW__Curl__Easy;
 
@@ -573,6 +574,10 @@ typedef perl_curl_form * WWW__Curl__Form;
 typedef perl_curl_multi * WWW__Curl__Multi;
 
 typedef perl_curl_share * WWW__Curl__Share;
+
+MODULE = WWW::Curl    PACKAGE = WWW::Curl
+
+INCLUDE: const-xs.inc
 
 MODULE = WWW::Curl    PACKAGE = WWW::Curl          PREFIX = curl_
 
@@ -588,11 +593,6 @@ BOOT:
 
 
 PROTOTYPES: ENABLE
-
-int
-constant(name)
-    char * name
-
 
 void
 curl_easy_init(...)
@@ -976,10 +976,6 @@ curl_easy_strerror(self, errornum)
 
 MODULE = WWW::Curl    PACKAGE = WWW::Curl::Form    PREFIX = curl_form_
 
-int
-constant(name)
-    char * name
-
 void
 curl_form_new(...)
     PREINIT:
@@ -1195,10 +1191,6 @@ curl_multi_strerror(self, errornum)
 MODULE = WWW::Curl    PACKAGE = WWW::Curl::Share    PREFIX = curl_share_
 
 PROTOTYPES: ENABLE
-
-int
-constant(name)
-    char * name
 
 void
 curl_share_new(...)
