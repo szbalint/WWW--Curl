@@ -4,11 +4,28 @@ use strict;
 use warnings;
 use XSLoader;
 
-our $VERSION = '4.15';
-XSLoader::load(__PACKAGE__, $VERSION);
+our $VERSION;
+BEGIN {
+	$VERSION = '4.15';
+	XSLoader::load(__PACKAGE__, $VERSION);
+}
 
 END {
     _global_cleanup();
+}
+
+our $AUTOLOAD;
+sub AUTOLOAD {
+    (my $constname = $AUTOLOAD) =~ s/.*:://;
+    die "&WWW::Curl::constant not defined" if $constname eq 'constant';
+    my ($error, $val) = constant($constname);
+    if ($error) {
+        my (undef,$file,$line) = caller;
+        die "$error at $file line $line.\n";
+    }
+    no strict 'refs';
+    *$AUTOLOAD = sub { $val };
+    goto &$AUTOLOAD;
 }
 
 1;
@@ -299,6 +316,10 @@ than it's C counterpart. Please see the section about WWW::Curl::Multi above.
 
 This method returns three arrayrefs: the read, write and exception fds libcurl knows about.
 In the case of no file descriptors in the given set, an empty array is returned.
+
+=item constant
+
+Useless.
 
 =back
 
