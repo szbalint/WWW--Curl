@@ -18,7 +18,10 @@ my $url = $ENV{CURL_TEST_URL} || "http://www.google.com";
 sub action_wait {
 	my $curlm = shift;
 	my ($rin, $win, $ein) = $curlm->fdset_vec;
-	my ($nfound,$timeleft) = select($rin, $win, $ein, 1);
+	my $timeout = $curlm->timeout;
+	if ( $timeout > 0 ) {
+		my ($nfound,$timeleft) = select($rin, $win, $ein, $timeout);
+	}
 }
 
     my $curl = new WWW::Curl::Easy;
