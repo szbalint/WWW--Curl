@@ -1129,6 +1129,45 @@ curl_multi_fdset(self)
 	XPUSHs(sv_2mortal(newRV(sv_2mortal((SV *) writeset))));
 	XPUSHs(sv_2mortal(newRV(sv_2mortal((SV *) excepset))));
 
+void
+curl_multi_fdset_vec(self)
+    WWW::Curl::Multi self
+    PREINIT:
+        fd_set fdread;
+        fd_set fdwrite;
+        fd_set fdexcep;
+        int maxfd;
+        int i;
+        int vecsize;
+        unsigned char readset[ sizeof( fd_set ) ] = { 0 };
+        unsigned char writeset[ sizeof( fd_set ) ] = { 0 };
+        unsigned char excepset[ sizeof( fd_set ) ] = { 0 };
+    PPCODE:
+        FD_ZERO(&fdread);
+        FD_ZERO(&fdwrite);
+        FD_ZERO(&fdexcep);
+
+        curl_multi_fdset(self->curlm, &fdread, &fdwrite, &fdexcep, &maxfd);
+        vecsize = ( maxfd + 8 ) / 8;
+
+        if ( maxfd != -1 ) {
+            for (i=0;i <= maxfd;i++) {
+                if (FD_ISSET(i, &fdread)) {
+                    readset[ i / 8 ] |= 1 << ( i % 8 );
+                }
+                if (FD_ISSET(i, &fdwrite)) {
+                    writeset[ i / 8 ] |= 1 << ( i % 8 );
+                }
+                if (FD_ISSET(i, &fdexcep)) {
+                    excepset[ i / 8 ] |= 1 << ( i % 8 );
+                }
+            }
+        }
+	XPUSHs(sv_2mortal(newSVpvn(readset, vecsize)));
+	XPUSHs(sv_2mortal(newSVpvn(writeset, vecsize)));
+	XPUSHs(sv_2mortal(newSVpvn(excepset, vecsize)));
+
+
 int
 curl_multi_perform(self)
     WWW::Curl::Multi self
