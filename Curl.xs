@@ -1167,6 +1167,22 @@ curl_multi_fdset_vec(self)
 	XPUSHs(sv_2mortal(newSVpvn(writeset, vecsize)));
 	XPUSHs(sv_2mortal(newSVpvn(excepset, vecsize)));
 
+double
+curl_multi_timeout(self)
+    WWW::Curl::Multi self
+    PREINIT:
+        long timeout;
+        CURLMcode ret;
+    CODE:
+        if ( curl_multi_timeout(self->curlm, &timeout) != CURLM_OK )
+            croak( "curl_multi_timeout() didn't return CURLM_OK" );
+
+        if ( timeout < 0 )
+            RETVAL = -1;
+        else
+            RETVAL = (double)timeout / 1000;
+    OUTPUT:
+        RETVAL
 
 int
 curl_multi_perform(self)
