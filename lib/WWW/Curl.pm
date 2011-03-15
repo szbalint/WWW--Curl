@@ -6,7 +6,7 @@ use XSLoader;
 
 our $VERSION;
 BEGIN {
-	$VERSION = '4.15';
+	$VERSION = '4.19_99';
 	XSLoader::load(__PACKAGE__, $VERSION);
 }
 
