@@ -113,6 +113,12 @@ See L<curl_easy_setopt(3)> for details of C<setopt()>.
 	$active_handles++;
 
 	while ($active_handles) {
+		my $timeout = $curlm->timeout();
+		if ( $timeout > 0 ) {
+			my ($rv, $wv, $ev) = $curlm->fdset_vec;
+			select $rv, $wv, $ev, $timeout;
+		}
+
 		my $active_transfers = $curlm->perform;
 		if ($active_transfers != $active_handles) {
 			while (my ($id,$return_value) = $curlm->info_read) {
