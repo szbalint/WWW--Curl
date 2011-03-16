@@ -90,7 +90,7 @@ typedef struct {
 } perl_curl_multi;
 
 typedef struct {
-    struct CURLSH *curlsh;
+    CURLSH *curlsh;
 } perl_curl_share;
 
 
@@ -381,7 +381,7 @@ fwrite_wrapper2 (
     perl_curl_easy *self,
     void *call_function,
     void *call_ctx,
-    int curl_infotype)
+    curl_infotype type)
 {
     dTHX;
     dSP;
@@ -407,7 +407,7 @@ fwrite_wrapper2 (
            XPUSHs(&PL_sv_undef);
         }
 
-	XPUSHs(sv_2mortal(newSViv(curl_infotype)));
+	XPUSHs(sv_2mortal(newSViv(type)));
 
         PUTBACK;
         count = perl_call_sv((SV *) call_function, G_SCALAR);
@@ -450,14 +450,14 @@ writeheader_callback_func(const void *ptr, size_t size, size_t nmemb, void *stre
 }
 
 /* debug callback for calling a perl callback */
-static size_t
-debug_callback_func(CURL* handle, int curl_infotype, const void *ptr, size_t size, void *stream)
+static int
+debug_callback_func(CURL* handle, curl_infotype type, char *ptr, size_t size, void *userptr)
 {
     perl_curl_easy *self;
-    self=(perl_curl_easy *)stream;
+    self=(perl_curl_easy *)userptr;
 
     return fwrite_wrapper2(ptr,size,self,
-            self->callback[CALLBACK_DEBUG],self->callback_ctx[CALLBACK_DEBUG],curl_infotype);
+            self->callback[CALLBACK_DEBUG],self->callback_ctx[CALLBACK_DEBUG],type);
 }
 
 /* read callback for calling a perl callback */
@@ -895,7 +895,7 @@ curl_easy_setopt(self, option, value, push=0)
 
             /* tell curl to redirect STDERR - value should be a glob */
             case CURLOPT_STDERR:
-                RETVAL = curl_easy_setopt(self->curl, option, IoOFP(sv_2io(value)) );
+                RETVAL = curl_easy_setopt(self->curl, option, PerlIO_findFILE( IoOFP(sv_2io(value)) ) );
                 break;
 
             /* not working yet... */
@@ -1192,7 +1192,7 @@ curl_multi_info_read(self)
 	};
 	if (easy) {
 		curl_easy_getinfo(easy, CURLINFO_PRIVATE, &stashid);
-		curl_easy_setopt(easy, CURLINFO_PRIVATE, NULL);
+		curl_easy_setopt(easy, CURLINFO_PRIVATE, (curl_off_t)NULL);
 		curl_multi_remove_handle(self->curlm, easy);
 		XPUSHs(sv_2mortal(newSVpv(stashid,0)));
 		XPUSHs(sv_2mortal(newSViv(res)));
