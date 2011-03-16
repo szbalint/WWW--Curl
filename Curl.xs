@@ -303,8 +303,16 @@ static perl_curl_multi * perl_curl_multi_new()
 static void perl_curl_multi_delete(perl_curl_multi *self)
 {
 #ifdef __CURL_MULTI_H
+    dTHX;
+    perl_curl_multi_callback_code i;
+
     if (self->curlm) 
         curl_multi_cleanup(self->curlm);
+    for(i=0;i<CALLBACKM_LAST;i++) {
+        sv_2mortal(self->callback[i]);
+        sv_2mortal(self->callback_ctx[i]);
+    }
+
     Safefree(self);
 #endif
 
@@ -322,8 +330,14 @@ static perl_curl_share * perl_curl_share_new()
 /* delete the share */
 static void perl_curl_share_delete(perl_curl_share *self)
 {
+    dTHX;
+    perl_curl_share_callback_code i;
     if (self->curlsh) 
         curl_share_cleanup(self->curlsh);
+    for(i=0;i<CALLBACKSH_LAST;i++) {
+        sv_2mortal(self->callback[i]);
+        sv_2mortal(self->callback_ctx[i]);
+    }
     Safefree(self);
 }
 
