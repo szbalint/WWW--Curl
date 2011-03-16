@@ -89,8 +89,17 @@ typedef struct {
 #endif
 } perl_curl_multi;
 
+typedef enum {
+    CALLBACKSH_LOCK = 0,
+    CALLBACKSH_UNLOCK,
+    CALLBACKSH_LAST,
+} perl_curl_share_callback_code;
+
 typedef struct {
     CURLSH *curlsh;
+
+    SV *callback[CALLBACKSH_LAST];
+    SV *callback_ctx[CALLBACKSH_LAST];
 } perl_curl_share;
 
 
@@ -220,6 +229,26 @@ static void perl_curl_easy_register_callback(perl_curl_easy *self, SV **callback
 
 #ifdef __CURL_MULTI_H
 static void perl_curl_multi_register_callback(perl_curl_multi *self, SV **callback, SV *function)
+{
+    dTHX;
+    if (function && SvOK(function)) {
+	    /* FIXME: need to check the ref-counts here */
+	    if (*callback == NULL) {
+		*callback = newSVsv(function);
+	    } else {
+		SvSetSV(*callback, function);
+	    }
+    } else {
+	    if (*callback != NULL) {
+		sv_2mortal(*callback);
+		*callback = NULL;
+	    }
+    }
+}
+#endif
+
+#if (LIBCURL_VERSION_NUM>=0x070a03)
+static void perl_curl_share_register_callback(perl_curl_share *self, SV **callback, SV *function)
 {
     dTHX;
     if (function && SvOK(function)) {
@@ -599,7 +628,72 @@ closepolicy_callback_func(void *clientp)
 }
 #endif
 
-/* Progress callback for calling a perl callback */
+#if (LIBCURL_VERSION_NUM>=0x070a03)
+static void lock_callback_func(CURL *easy, curl_lock_data data, curl_lock_access locktype, void *userp )
+{
+    dTHX;
+    dSP;
+
+    int count;
+    perl_curl_easy *self;
+    self=(perl_curl_easy *)userp;
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(sp);
+    if (self->callback_ctx[CALLBACKSH_LOCK]) {
+        XPUSHs(sv_2mortal(newSVsv(self->callback_ctx[CALLBACKSH_LOCK])));
+    } else {
+        XPUSHs(&PL_sv_undef);
+    }
+    XPUSHs(sv_2mortal(newSViv( data )));
+    XPUSHs(sv_2mortal(newSViv( locktype )));
+
+    PUTBACK;
+    count = perl_call_sv(self->callback[CALLBACKSH_LOCK], G_SCALAR);
+    SPAGAIN;
+
+    if (count != 0)
+        croak("callback for CURLSHOPT_LOCKFUNCTION didn't return void\n");
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+    return;
+}
+
+static void unlock_callback_func(CURL *easy, curl_lock_data data, void *userp )
+{
+    dTHX;
+    dSP;
+
+    int count;
+    perl_curl_easy *self;
+    self=(perl_curl_easy *)userp;
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(sp);
+    if (self->callback_ctx[CALLBACKSH_LOCK]) {
+        XPUSHs(sv_2mortal(newSVsv(self->callback_ctx[CALLBACKSH_LOCK])));
+    } else {
+        XPUSHs(&PL_sv_undef);
+    }
+    XPUSHs(sv_2mortal(newSViv( data )));
+
+    PUTBACK;
+    count = perl_call_sv(self->callback[CALLBACKSH_LOCK], G_SCALAR);
+    SPAGAIN;
+
+    if (count != 0)
+        croak("callback for CURLSHOPT_UNLOCKFUNCTION didn't return void\n");
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+    return;
+}
+#endif
 
 static int socket_callback_func(CURL *easy, curl_socket_t s, int what, void *userp, void *socketp )
 {
@@ -1448,6 +1542,20 @@ curl_share_setopt(self, option, value)
 #if (LIBCURL_VERSION_NUM>=0x070a03)
         switch(option) {
             /* slist cases */
+            case CURLSHOPT_LOCKFUNC:
+                curl_share_setopt(self->curlsh, CURLSHOPT_LOCKFUNC, SvOK(value) ? lock_callback_func : NULL);
+                curl_share_setopt(self->curlsh, CURLSHOPT_USERDATA, SvOK(value) ? self : NULL);
+                perl_curl_share_register_callback(self,&(self->callback[CALLBACKSH_LOCK]), value);
+                break;
+            case CURLSHOPT_UNLOCKFUNC:
+                curl_share_setopt(self->curlsh, CURLSHOPT_UNLOCKFUNC, SvOK(value) ? unlock_callback_func : NULL);
+                curl_share_setopt(self->curlsh, CURLSHOPT_USERDATA, SvOK(value) ? self : NULL);
+                perl_curl_share_register_callback(self,&(self->callback[CALLBACKSH_UNLOCK]), value);
+                break;
+            case CURLSHOPT_USERDATA:
+                perl_curl_share_register_callback(self,&(self->callback_ctx[CALLBACKSH_LOCK]), value);
+                //perl_curl_share_register_callback(self,&(self->callback_ctx[CALLBACKSH_UNLOCK]), value);
+                break;
             case CURLSHOPT_SHARE:
             case CURLSHOPT_UNSHARE:
                 RETVAL = curl_share_setopt(self->curlsh, option, (long)SvIV(value));
