@@ -114,9 +114,9 @@ See L<curl_easy_setopt(3)> for details of C<setopt()>.
 
 	while ($active_handles) {
 		my $timeout = $curlm->timeout();
-		if ( $timeout > 0 ) {
+		if ( $timeout > 1 ) {
 			my ($rv, $wv, $ev) = $curlm->fdset_vec;
-			select $rv, $wv, $ev, $timeout;
+			select $rv, $wv, $ev, $timeout / 1000;
 		}
 
 		my $active_transfers = $curlm->perform;
