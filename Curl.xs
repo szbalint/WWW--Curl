@@ -66,10 +66,19 @@ typedef struct {
     struct curl_httppost * last;
 } perl_curl_form;
 
+typedef enum {
+    CALLBACKM_SOCKET = 0,
+    CALLBACKM_TIMER,
+    CALLBACKM_LAST,
+} perl_curl_multi_callback_code;
 
 typedef struct {
 #ifdef __CURL_MULTI_H
     struct CURLM *curlm;
+
+    SV *callback[CALLBACKM_LAST];
+    SV *callback_ctx[CALLBACKM_LAST];
+
 #else
     struct void *curlm;
 #endif
@@ -203,6 +212,27 @@ static void perl_curl_easy_register_callback(perl_curl_easy *self, SV **callback
 	    }
     }
 }
+
+#ifdef __CURL_MULTI_H
+static void perl_curl_multi_register_callback(perl_curl_multi *self, SV **callback, SV *function)
+{
+    dTHX;
+    if (function && SvOK(function)) {
+	    /* FIXME: need to check the ref-counts here */
+	    if (*callback == NULL) {
+		*callback = newSVsv(function);
+	    } else {
+		SvSetSV(*callback, function);
+	    }
+    } else {
+	    if (*callback != NULL) {
+		sv_2mortal(*callback);
+		*callback = NULL;
+	    }
+    }
+}
+#endif
+
 
 /* start of form functions - very un-finished! */
 static perl_curl_form * perl_curl_form_new()
@@ -563,6 +593,78 @@ closepolicy_callback_func(void *clientp)
    return status;
 }
 #endif
+
+/* Progress callback for calling a perl callback */
+
+static int socket_callback_func(CURL *easy, curl_socket_t s, int what, void *userp, void *socketp )
+{
+    dTHX;
+    dSP;
+
+    int count;
+    perl_curl_multi *self;
+    self=(perl_curl_multi *)userp;
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(sp);
+    if (self->callback_ctx[CALLBACKM_SOCKET]) {
+        XPUSHs(sv_2mortal(newSVsv(self->callback_ctx[CALLBACKM_SOCKET])));
+    } else {
+        XPUSHs(&PL_sv_undef);
+    }
+    XPUSHs(sv_2mortal(newSVuv( s )));
+    XPUSHs(sv_2mortal(newSViv( what )));
+
+    PUTBACK;
+    count = perl_call_sv(self->callback[CALLBACKM_SOCKET], G_SCALAR);
+    SPAGAIN;
+
+    if (count != 1)
+        croak("callback for CURLMOPT_SOCKETFUNCTION didn't return 1\n");
+
+    count = POPi;
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+    return count;
+}
+
+static int timer_callback_func(CURLM *multi, long timeout_ms, void *userp )
+{
+    dTHX;
+    dSP;
+
+    int count;
+    perl_curl_multi *self;
+    self=(perl_curl_multi *)userp;
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(sp);
+    if (self->callback_ctx[CALLBACKM_TIMER]) {
+        XPUSHs(sv_2mortal(newSVsv(self->callback_ctx[CALLBACKM_TIMER])));
+    } else {
+        XPUSHs(&PL_sv_undef);
+    }
+    XPUSHs(sv_2mortal(newSVnv( (double)timeout_ms / 1000 )));
+
+    PUTBACK;
+    count = perl_call_sv(self->callback[CALLBACKM_TIMER], G_SCALAR);
+    SPAGAIN;
+
+    if (count != 1)
+        croak("callback for CURLMOPT_TIMERFUNCTION didn't return 1\n");
+
+    count = POPi;
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+    return count;
+}
+
 
 #include "const-defenums.h"
 #include "const-c.inc"
@@ -1183,6 +1285,49 @@ curl_multi_timeout(self)
             RETVAL = (double)timeout / 1000;
     OUTPUT:
         RETVAL
+
+int
+curl_multi_setopt(self, option, value)
+        WWW::Curl::Multi self
+        int option
+        SV * value
+    CODE:
+        RETVAL=0;
+#ifdef __CURL_MULTI_H
+        RETVAL=CURLM_OK;
+        switch(option) {
+            case CURLMOPT_SOCKETFUNCTION:
+            case CURLMOPT_SOCKETDATA:
+                curl_multi_setopt(self->curlm, CURLMOPT_SOCKETFUNCTION, SvOK(value) ? socket_callback_func : NULL);
+                curl_multi_setopt(self->curlm, CURLMOPT_SOCKETDATA, SvOK(value) ? self : NULL);
+                perl_curl_multi_register_callback(self,
+			option == CURLMOPT_SOCKETDATA ? &(self->callback_ctx[CALLBACKM_SOCKET]) : &(self->callback[CALLBACKM_SOCKET]),
+			value);
+                break;
+            case CURLMOPT_TIMERFUNCTION:
+            case CURLMOPT_TIMERDATA:
+                curl_multi_setopt(self->curlm, CURLMOPT_TIMERFUNCTION, SvOK(value) ? timer_callback_func : NULL);
+                curl_multi_setopt(self->curlm, CURLMOPT_TIMERDATA, SvOK(value) ? self : NULL);
+                perl_curl_multi_register_callback(self,
+			option == CURLMOPT_TIMERDATA ? &(self->callback_ctx[CALLBACKM_TIMER]) : &(self->callback[CALLBACKM_TIMER]),
+			value);
+                break;
+
+            /* default cases */
+            default:
+                if (option < CURLOPTTYPE_OBJECTPOINT) { /* A long (integer) value */
+                    RETVAL = curl_multi_setopt(self->curlm, option, (long)SvIV(value));
+                }
+                else {
+                    croak("Unknown curl multi option");
+                }
+                ;
+                break;
+        };
+#endif
+    OUTPUT:
+        RETVAL
+
 
 int
 curl_multi_perform(self)
