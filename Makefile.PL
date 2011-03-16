@@ -165,7 +165,7 @@ sub divide_constants
 
 	foreach ( @$constant_names ) {
 		my $list = 0;
-		$list = 1 if /^CURLSHOPT_/;
+		$list = 1 if /^(CURLSHOPT_|CURL_LOCK_)/;
 		$list = 2 if /^CURLFORM_/;
 		#$list = 3 if /^CURL_(POLL|CSELECT)_/;
 		push @{ $out[ $list ] }, $_;
