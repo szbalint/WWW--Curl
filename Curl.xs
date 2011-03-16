@@ -1267,7 +1267,6 @@ curl_multi_info_read(self)
 	};
 	if (easy) {
 		curl_easy_getinfo(easy, CURLINFO_PRIVATE, &stashid);
-		curl_easy_setopt(easy, CURLINFO_PRIVATE, (curl_off_t)NULL);
 		curl_multi_remove_handle(self->curlm, easy);
 		XPUSHs(sv_2mortal(newSVpv(stashid,0)));
 		XPUSHs(sv_2mortal(newSViv(res)));
