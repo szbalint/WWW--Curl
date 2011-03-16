@@ -38,8 +38,15 @@ WriteMakefile(
 	NAME 		=> 'WWW::Curl',
 	VERSION_FROM	=> 'lib/WWW/Curl.pm',
 	ABSTRACT_FROM	=> 'lib/WWW/Curl.pm',
-	AUTHOR		=> 'Cris Bailiff <c.bailiff+curl at devsecure.com>, ' .
-				'Balint Szilakszi <szbalint at cpan.org>',
+	AUTHOR		=> 'Cris Bailiff <c.bailiff+curl at devsecure.com>',
+	META_MERGE	=> {
+		author	=> [
+			'Balint Szilakszi <szbalint at cpan.org>',
+		],
+		resources => {
+			repository => 'http://github.com/szbalint/WWW--Curl'
+		},
+	},
 	CCFLAGS		=> $cflags,
 	LIBS		=> $libs,
 	SIGN		=> 1,
