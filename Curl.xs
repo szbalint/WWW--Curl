@@ -648,7 +648,7 @@ static int timer_callback_func(CURLM *multi, long timeout_ms, void *userp )
     } else {
         XPUSHs(&PL_sv_undef);
     }
-    XPUSHs(sv_2mortal(newSVnv( (double)timeout_ms / 1000 )));
+    XPUSHs(sv_2mortal(newSViv(timeout_ms)));
 
     PUTBACK;
     count = perl_call_sv(self->callback[CALLBACKM_TIMER], G_SCALAR);
@@ -1269,7 +1269,7 @@ curl_multi_fdset_vec(self)
 	XPUSHs(sv_2mortal(newSVpvn(writeset, vecsize)));
 	XPUSHs(sv_2mortal(newSVpvn(excepset, vecsize)));
 
-double
+long
 curl_multi_timeout(self)
     WWW::Curl::Multi self
     PREINIT:
@@ -1279,10 +1279,7 @@ curl_multi_timeout(self)
         if ( curl_multi_timeout(self->curlm, &timeout) != CURLM_OK )
             croak( "curl_multi_timeout() didn't return CURLM_OK" );
 
-        if ( timeout < 0 )
-            RETVAL = -1;
-        else
-            RETVAL = (double)timeout / 1000;
+        RETVAL = timeout;
     OUTPUT:
         RETVAL
 
