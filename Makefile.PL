@@ -15,18 +15,24 @@ if ( $^O eq 'MSWin32' ) {
 }
 
 
-my $constant_names = get_constants( $curl_d . "/curl/curl.h" );
+my $constant_names = get_constants(
+	$curl_d . "/curl/curl.h",
+	-f $curl_d . "/curl/multi.h" ? $curl_d . "/curl/multi.h" : ()
+);
+
 {
 	my $cn = scalar @$constant_names;
+	print "-> found $cn constants\n";
 	# there are 622 constants in libcurl 7.21.4
-	die "Found $cn constants, there should be at least 500\n"
+	die "Found only $cn constants, there should be at least 500\n"
 		if $cn < 500;
 }
-my @constant_names = divide_constants();
+my @constant_types = divide_constants();
 
-write_from_template( "Easy", $constant_names[ 0 ] );
-write_from_template( "Share", $constant_names[ 1 ] );
-write_from_template( "Form", $constant_names[ 2 ] );
+write_from_template( "Easy", $constant_types[ 0 ] );
+write_from_template( "Share", $constant_types[ 1 ] );
+write_from_template( "Form", $constant_types[ 2 ] );
+#write_from_template( "Multi", $constant_types[ 3 ] );
 
 WriteMakefile(
 	NAME 		=> 'WWW::Curl',
@@ -107,33 +113,33 @@ sub get_curl_config
 
 sub get_constants
 {
-	my $curl_h = shift;
-	
-	print "Reading $curl_h\n";
 	my %syms;
-	open( H_IN, "-|", "$Config{cpprun} $curl_h" )
-		or die "Cannot run $Config{cpprun} $curl_h: $@\n";
-	while ( <H_IN> ) {
-		if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
-			s/^\s+//;
-			next unless /^CURL/;
-			chomp;
-			s/[,\s].*//;
-			s/=.*$//;
-			next unless /^\w+$/;
-			$syms{ $_ } = 1;
+	foreach my $curl_h ( @_ ) {
+		print "Reading $curl_h\n";
+		open( H_IN, "-|", "$Config{cpprun} $curl_h" )
+			or die "Cannot run $Config{cpprun} $curl_h: $@\n";
+		while ( <H_IN> ) {
+			if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
+				s/^\s+//;
+				next unless /^CURL/;
+				chomp;
+				s/[,\s].*//;
+				s/=.*$//;
+				next unless /^\w+$/;
+				$syms{ $_ } = 1;
+			}
 		}
-	}
-	close H_IN;
+		close H_IN;
 
-	open (H, "<", $curl_h)
-		or die "Cannot open $curl_h: ".$!;
-	while(<H>) {
-		if (/^#define (CURL[A-Za-z0-9_]*)/) {
-			$syms{ $1 } = 1;
+		open (H, "<", $curl_h)
+			or die "Cannot open $curl_h: ".$!;
+		while(<H>) {
+			if (/^#define (CURL[A-Za-z0-9_]*)/) {
+				$syms{ $1 } = 1;
+			}
 		}
+		close H;
 	}
-	close H;
 
 	my @out;
 	foreach my $e (sort keys %syms) {
@@ -143,7 +149,7 @@ sub get_constants
 		push @out, $e;
 	}
 
-	\@out;
+	return \@out;
 }
 
 sub divide_constants
@@ -154,6 +160,7 @@ sub divide_constants
 		my $list = 0;
 		$list = 1 if /^CURLSHOPT_/;
 		$list = 2 if /^CURLFORM_/;
+		#$list = 3 if /^CURL_(POLL|CSELECT)_/;
 		push @{ $out[ $list ] }, $_;
 	}
 	return @out;
