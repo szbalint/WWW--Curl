@@ -609,39 +609,6 @@ static int progress_callback_func(void *clientp, double dltotal, double dlnow,
 }
 
 
-
-#if 0
-/* awaiting closepolicy prototype */
-int 
-closepolicy_callback_func(void *clientp)
-{
-   dSP;
-   int argc, status;
-   SV *pl_status;
-
-   ENTER;
-   SAVETMPS;
-
-   PUSHMARK(SP);
-   PUTBACK;
-
-   argc = perl_call_sv(closepolicy_callback, G_SCALAR);
-   SPAGAIN;
-
-   if (argc != 1) {
-      croak("Unexpected number of arguments returned from closefunction callback\n");
-   }
-   pl_status = POPs;
-   status = SvTRUE(pl_status) ? 0 : 1;
-
-   PUTBACK;
-   FREETMPS;
-   LEAVE;
-
-   return status;
-}
-#endif
-
 #if (LIBCURL_VERSION_NUM>=0x070a03)
 static void lock_callback_func(CURL *easy, curl_lock_data data, curl_lock_access locktype, void *userp )
 {
@@ -1451,29 +1418,6 @@ curl_multi_perform(self)
         while(CURLM_CALL_MULTI_PERFORM ==
             curl_multi_perform(self->curlm, &remaining));
 	    RETVAL = remaining;
-        /* while(remaining) {
-            struct timeval timeout;
-            int rc;
-            fd_set fdread;
-            fd_set fdwrite;
-            fd_set fdexcep;
-            int maxfd;
-            FD_ZERO(&fdread);
-            FD_ZERO(&fdwrite);
-            FD_ZERO(&fdexcep);
-            timeout.tv_sec = 1;
-            timeout.tv_usec = 0;
-            curl_multi_fdset(self->curlm, &fdread, &fdwrite, &fdexcep, &maxfd);
-            rc = select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
-            switch(rc) {
-              case -1:
-                  break;
-              default:
-                  while(CURLM_CALL_MULTI_PERFORM ==
-                      curl_multi_perform(self->curlm, &remaining));
-                  break;
-            }
-        } */
 #endif
 	OUTPUT:
 		RETVAL
@@ -1568,7 +1512,6 @@ curl_share_setopt(self, option, value)
                 break;
             case CURLSHOPT_USERDATA:
                 perl_curl_share_register_callback(self,&(self->callback_ctx[CALLBACKSH_LOCK]), value);
-                //perl_curl_share_register_callback(self,&(self->callback_ctx[CALLBACKSH_UNLOCK]), value);
                 break;
             case CURLSHOPT_SHARE:
             case CURLSHOPT_UNSHARE:
