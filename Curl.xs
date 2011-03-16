@@ -1366,6 +1366,23 @@ curl_multi_perform(self)
 	OUTPUT:
 		RETVAL
 
+int
+curl_multi_socket_action(self, sockfd=CURL_SOCKET_BAD, ev_bitmask=0)
+    WWW::Curl::Multi self
+    int sockfd;
+    int ev_bitmask;
+    PREINIT:
+        int remaining;
+    CODE:
+#ifdef __CURL_MULTI_H
+        while(CURLM_CALL_MULTI_PERFORM ==
+            curl_multi_socket_action(self->curlm, (curl_socket_t) sockfd, ev_bitmask, &remaining));
+        RETVAL = remaining;
+#endif
+	OUTPUT:
+		RETVAL
+
+
 void
 curl_multi_DESTROY(self)
     WWW::Curl::Multi self
