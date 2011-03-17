@@ -1,7 +1,6 @@
 Changes
 Curl.xs
 lib/WWW/Curl.pm
-lib/WWW/Curl/Multi.pm
 LICENSE
 Makefile.PL
 MANIFEST
@@ -44,5 +43,6 @@ t/pod.t
 t/symbols-in-versions
 template/Easy.pm.tmpl
 template/Form.pm.tmpl
+template/Multi.pm.tmpl
 template/Share.pm.tmpl
 typemap

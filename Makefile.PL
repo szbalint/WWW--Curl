@@ -29,6 +29,7 @@ my $constant_names = get_constants(
 }
 my @constant_types = divide_constants();
 
+mkdir "lib/WWW/Curl";
 write_from_template( "Easy", $constant_types[ 0 ] );
 write_from_template( "Share", $constant_types[ 1 ] );
 write_from_template( "Form", $constant_types[ 2 ] );
