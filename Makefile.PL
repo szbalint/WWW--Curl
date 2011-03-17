@@ -9,7 +9,7 @@ my ( $curl_d, $cflags, $libs ) = ('', '', '');
 if ( $^O eq 'MSWin32' ) {
 	print	"Sorry, no automated install is available on Windows,\n".
 		"please see the README.Win32 file on instructions for a manual install.\n";
-	exit 0;
+	exit 1;
 } else {
 	( $curl_d, $cflags, $libs ) = get_curl_config();
 }
@@ -75,6 +75,11 @@ sub get_curl_config
 	my %cc;
 	foreach my $opt ( qw(vernum version prefix cflags libs) ) {
 		my $ret = `${curl_config} --$opt`;
+		if ( $? ) {
+			print "Execution ${curl_config} --$opt failed.\n" .
+				"is your curl installed correctly ?\n";
+			exit 1;
+		}
 		chomp $ret;
 		$cc{ $opt } = $ret;
 		# print "${curl_config} --$opt: $ret\n";
@@ -87,7 +92,7 @@ sub get_curl_config
 			"Your currently installed libcurl version - $cc{version} - is too old.\n".
 			"This module doesn't seek compatibility with versions older than 7.10.8\n".
 			"Proceed manually if you know what you're doing.\n";
-		exit 0;
+		exit 1;
 	}
 
 	my @incpath = (
