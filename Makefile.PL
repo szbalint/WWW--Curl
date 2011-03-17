@@ -57,7 +57,10 @@ WriteMakefile(
 		FILES => 'const-c.inc const-xs.inc const-defenums.h'
 	},
 	realclean	=> {
-		FILES => 'lib/WWW/Curl/Easy.pm lib/WWW/Curl/Form.pm lib/WWW/Curl/Share.pm'
+		FILES => [qw(lib/WWW/Curl/Easy.pm
+			lib/WWW/Curl/Form.pm
+			lib/WWW/Curl/Multi.pm
+			lib/WWW/Curl/Share.pm)]
 	},
 );
 
