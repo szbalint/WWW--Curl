@@ -15,7 +15,7 @@ if ( $^O eq 'MSWin32' ) {
 }
 
 
-my $constant_names = get_constants(
+my $constant_names = get_constants( $cflags,
 	$curl_d . "/curl/curl.h",
 	-f $curl_d . "/curl/multi.h" ? $curl_d . "/curl/multi.h" : ()
 );
@@ -127,9 +127,11 @@ sub get_curl_config
 sub get_constants
 {
 	my %syms;
+	my $cflags = shift;
+
 	foreach my $curl_h ( @_ ) {
-		print "Reading $curl_h\n";
-		open( H_IN, "-|", "$Config{cpprun} $curl_h" )
+		print "Reading $curl_h ($Config{cpprun} $cflags $curl_h)\n";
+		open( H_IN, "-|", "$Config{cpprun} $cflags $curl_h" )
 			or die "Cannot run $Config{cpprun} $curl_h: $@\n";
 		while ( <H_IN> ) {
 			if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
