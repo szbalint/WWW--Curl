@@ -1,31 +1,58 @@
+use strict;
 use ExtUtils::MakeMaker;
 use ExtUtils::MakeMaker::Config;
 use ExtUtils::Constant 0.11 'WriteConstants';
 
+# you can set those manually if curl-config is not working for you
+my %curl = (
+	incdir => '',	# /some/path (where curl/curl.h is)
+	cflags => '',	# -I/some/path
+	libs => '',	# -lcurl
+	version => ''	# 7.21.0
+);
+
+
 my $minimum_libcurl_ver = 0x070a08;
+my $constant_names;
 
-my ( $curl_d, $cflags, $libs ) = ('', '', '');
-
-if ( $^O eq 'MSWin32' ) {
+if ( $curl{libs} and $curl{libs} ) {
+	print "Using manually introduced curl options:\n";
+	while ( my ($k, $v) = each %curl ) {
+		printf " %8s => %s\n", $k, $v;
+	}
+} elsif ( $^O eq 'MSWin32' ) {
 	print	"Sorry, no automated install is available on Windows,\n".
 		"please see the README.Win32 file on instructions for a manual install.\n";
 	exit 1;
 } else {
-	( $curl_d, $cflags, $libs ) = get_curl_config();
+	%curl = get_curl_config();
 }
 
-
-my $constant_names = get_constants( $cflags,
-	$curl_d . "/curl/curl.h",
-	-f $curl_d . "/curl/multi.h" ? $curl_d . "/curl/multi.h" : ()
-);
+my $constant_names_sym = get_constants_symbols( $curl{version} );
+eval {
+	$constant_names = get_constants( $curl{cflags},
+		$curl{incdir} . "/curl/curl.h",
+		-f $curl{incdir} . "/curl/multi.h" ? $curl{incdir} . "/curl/multi.h" : ()
+	);
+};
+if ( $@ ) {
+	warn "Cannot extract constants from header files: $@\n";
+	warn "Using symbols-in-versions instead\n";
+	$constant_names = $constant_names_sym;
+}
 
 {
 	my $cn = scalar @$constant_names;
-	print "-> found $cn constants\n";
-	# there are 622 constants in libcurl 7.21.4
-	die "Found only $cn constants, there should be at least 500\n"
-		if $cn < 500;
+	my $cns = scalar @$constant_names_sym;
+
+	my %cn;
+	@cn{ @$constant_names } = ( 1 ) x scalar @$constant_names;
+	foreach my $cnt ( @$constant_names_sym ) {
+		print "$cnt missing\n" unless $cn{ $cnt };
+	}
+	die "Found only $cn constants, there should be at least $cns\n"
+		if $cn < $cns;
+	print "-> found $cn constants (should be $cns)\n";
 }
 my @constant_types = divide_constants();
 
@@ -48,8 +75,8 @@ WriteMakefile(
 			repository => 'http://github.com/szbalint/WWW--Curl'
 		},
 	},
-	CCFLAGS		=> $cflags,
-	LIBS		=> $libs,
+	CCFLAGS		=> $curl{cflags},
+	LIBS		=> $curl{libs},
 	SIGN		=> 1,
 	LICENSE		=> 'MPL or MIT/X-derivate',	
 	MIN_PERL_VERSION => 5.006001,
@@ -71,6 +98,8 @@ WriteConstants(
 	NAME => 'WWW::Curl',
 	NAMES => $constant_names,
 );
+
+exit 0;
 
 sub get_curl_config
 {
@@ -99,7 +128,7 @@ sub get_curl_config
 	}
 
 	my @incpath = (
-		( defined $curl_d ? $curl_d : () ),
+		( defined $curl{incdir} ? $curl{incdir} : () ),
 		( $cc{cflags} =~ /-I(\S+)/g ),
 		( "$cc{prefix}/include" ),
 		( split /\s+/, $Config{usrinc} ),
@@ -123,8 +152,40 @@ sub get_curl_config
 	die "Cannot find curl.h - cannot build constants files  - see Makefile.PL"
 		unless defined $curl_d;
 
+	$cc{incdir} = $curl_d;
 	$cc{libs} ||= "-lcurl";
-	return ( $curl_d, $cc{cflags}, $cc{libs} );
+	return %cc;
+}
+
+sub get_constants_symbols
+{
+	my $curlver = shift;
+	$curlver =~ s/libcurl\s+//;
+	my $cver = eval "v$curlver";
+
+	my %out;
+
+	open my $fin, "<", "inc/symbols-in-versions"
+		or die "Cannot open symbols file: $!\n";
+	while ( <$fin> ) {
+		next if /^#\s+/;
+		my ( $sym, $in, $dep, $out ) = split /\s+/, $_;
+
+		if ( $out ) {
+			my $vout = eval "v$out";
+			next if $cver ge $vout;
+		}
+
+		if ( $in ne "-" ) {
+			my $vin = eval "v$in";
+			next unless $cver ge $vin;
+		}
+
+		$out{ $sym } = 1;
+	}
+
+	my @out = sort keys %out;
+	return \@out;
 }
 
 sub get_constants
