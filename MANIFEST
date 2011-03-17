@@ -1,5 +1,6 @@
 Changes
 Curl.xs
+inc/symbols-in-versions
 lib/WWW/Curl.pm
 LICENSE
 Makefile.PL
@@ -40,7 +41,6 @@ t/new/10multi-callback.t
 t/new/README
 t/pod-coverage.t
 t/pod.t
-t/symbols-in-versions
 template/Easy.pm.tmpl
 template/Form.pm.tmpl
 template/Multi.pm.tmpl
