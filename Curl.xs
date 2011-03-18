@@ -1195,6 +1195,51 @@ curl_easy_errbuf(self)
     OUTPUT:
         RETVAL
 
+size_t
+curl_easy_send( self, buffer )
+	WWW::Curl::Easy self
+	SV *buffer
+	CODE:
+		CURLcode ret;
+		STRLEN len;
+		const char *pv;
+		size_t out_len;
+
+		if ( ! SvOK( buffer ) )
+			croak( "buffer is not valid\n" );
+
+		pv = SvPV( buffer, len );
+		ret = curl_easy_send( self->curl, pv, len, &out_len );
+		if ( ret != CURLE_OK )
+			croak( "curl_easy_send() didn't return CURLE_OK\n" );
+
+		RETVAL = out_len;
+	OUTPUT:
+		RETVAL
+
+int
+curl_easy_recv( self, buffer, length )
+	WWW::Curl::Easy self
+	SV *buffer
+	size_t length
+	CODE:
+		CURLcode ret;
+		size_t out_len;
+		char *tmpbuf;
+
+		Newx( tmpbuf, length, char);
+		ret = curl_easy_recv( self->curl, tmpbuf, length, &out_len );
+		if ( ret != CURLE_OK )
+			sv_setsv( buffer, &PL_sv_undef );
+		else
+			sv_setpvn( buffer, tmpbuf, out_len );
+
+		Safefree( tmpbuf );
+		RETVAL = ret;
+	OUTPUT:
+		RETVAL
+
+
 int
 curl_easy_cleanup(self)
     WWW::Curl::Easy self
