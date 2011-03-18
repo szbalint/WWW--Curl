@@ -1200,6 +1200,7 @@ curl_easy_send( self, buffer )
 	WWW::Curl::Easy self
 	SV *buffer
 	CODE:
+#if (LIBCURL_VERSION_NUM>=0x071202)
 		CURLcode ret;
 		STRLEN len;
 		const char *pv;
@@ -1214,6 +1215,10 @@ curl_easy_send( self, buffer )
 			croak( "curl_easy_send() didn't return CURLE_OK\n" );
 
 		RETVAL = out_len;
+#else
+		croak( "curl_easy_send() not available in curl before 7.18.2\n" );
+		RETVAL = 0;
+#endif
 	OUTPUT:
 		RETVAL
 
@@ -1223,6 +1228,7 @@ curl_easy_recv( self, buffer, length )
 	SV *buffer
 	size_t length
 	CODE:
+#if (LIBCURL_VERSION_NUM>=0x071202)
 		CURLcode ret;
 		size_t out_len;
 		char *tmpbuf;
@@ -1236,6 +1242,10 @@ curl_easy_recv( self, buffer, length )
 
 		Safefree( tmpbuf );
 		RETVAL = ret;
+#else
+		croak( "curl_easy_recv() not available in curl before 7.18.2\n" );
+		RETVAL = 0;
+#endif
 	OUTPUT:
 		RETVAL
 
