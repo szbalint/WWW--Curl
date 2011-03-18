@@ -246,6 +246,14 @@ Not implemented.
 
 Not implemented.
 
+=item curl_easy_recv
+
+Works, check test 22sendrecv.t for example code.
+
+=item curl_easy_send
+
+Works, check test 22sendrecv.t for example code.
+
 =item curl_easy_unescape
 
 Not implemented. Trivial Perl replacements are available.
@@ -311,7 +319,7 @@ Seems to work.
 
 =item curl_version_info
 
-Not yet implemented.
+Works. Returns a hash reference.
 
 =item curl_multi_*
 
@@ -322,6 +330,33 @@ than it's C counterpart. Please see the section about WWW::Curl::Multi above.
 
 This method returns three arrayrefs: the read, write and exception fds libcurl knows about.
 In the case of no file descriptors in the given set, an empty array is returned.
+
+=item $curl_multi->fdset_vec
+
+Retrieves the same information as curl_multi_fdset, but returns three scalars (vectors)
+which can be used directly in select() and vec().
+
+=item curl_multi_setopt
+
+Most of the options should work, however some might not. Please send reports,
+tests and patches to fix those.
+
+=item curl_multi_socket
+
+Not implemented. Simply call socket_action() without bitmask.
+
+=item curl_multi_socket_action
+
+Should work. Check test 23socket-action.t for example code.
+
+=item curl_multi_timeout
+
+Works.
+
+=item curl_share_setopt
+
+Most of the options should work, however some might not. Please send reports,
+tests and patches to fix those.
 
 =item constant
 
