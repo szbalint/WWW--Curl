@@ -873,6 +873,74 @@ curl_easy_version(...)
     OUTPUT:
         RETVAL
 
+
+SV *
+curl_easy_version_info()
+	PREINIT:
+		curl_version_info_data *vi;
+		HV *ret;
+	CODE:
+		vi = curl_version_info( CURLVERSION_NOW );
+		if ( vi == NULL )
+			croak( "curl_version_info() returned NULL\n" );
+		ret = newHV();
+		if ( vi->age >= CURLVERSION_FIRST ) {
+			if ( vi->version )
+				hv_store( ret, "version", 7,
+					newSVpv(vi->version, 0), 0 );
+			hv_store( ret, "version_num", 11,
+				newSVuv(vi->version_num), 0 );
+			if ( vi->host )
+				hv_store( ret, "host", 4,
+					newSVpv(vi->host, 0), 0 );
+			hv_store( ret, "features", 8,
+				newSViv(vi->features), 0 );
+			if ( vi->ssl_version )
+				hv_store( ret, "ssl_version", 11,
+					newSVpv(vi->ssl_version, 0), 0 );
+			hv_store( ret, "ssl_version_num", 15,
+				newSViv(vi->ssl_version_num), 0 );
+			if ( vi->libz_version )
+				hv_store( ret, "libz_version", 12,
+					newSVpv(vi->libz_version, 0), 0 );
+			if ( vi->protocols ) {
+				const char * const *p = vi->protocols;
+				AV *prot;
+				prot = (AV *)sv_2mortal((SV *)newAV());
+				while ( *p != NULL ) {
+					av_push( prot, newSVpv( *p, 0 ) );
+					p++;
+				}
+
+				hv_store( ret, "protocols", 9,
+					newRV((SV*)prot), 0 );
+			}
+		}
+		if ( vi->age >= CURLVERSION_SECOND ) {
+			if ( vi->ares )
+				hv_store( ret, "ares", 4,
+					newSVpv(vi->ares, 0), 0 );
+			hv_store( ret, "ares_num", 8,
+				newSViv(vi->ares_num), 0 );
+		}
+		if ( vi->age >= CURLVERSION_THIRD ) {
+			if ( vi->libidn )
+				hv_store( ret, "libidn", 6,
+					newSVpv(vi->libidn, 0), 0 );
+		}
+		if ( vi->age >= CURLVERSION_FOURTH ) {
+			hv_store( ret, "iconv_ver_num", 13,
+				newSViv(vi->iconv_ver_num), 0 );
+			if ( vi->libssh_version )
+				hv_store( ret, "libssh_version", 14,
+					newSVpv(vi->libssh_version, 0), 0 );
+		}
+
+		RETVAL = newRV( (SV *)ret );
+	OUTPUT:
+		RETVAL
+
+
 int
 curl_easy_setopt(self, option, value, push=0)
         WWW::Curl::Easy self
