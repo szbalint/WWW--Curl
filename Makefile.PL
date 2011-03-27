@@ -239,7 +239,7 @@ sub divide_constants
 		my $list = 0;
 		$list = 1 if /^(CURLSHOPT_|CURL_LOCK_)/;
 		$list = 2 if /^CURLFORM_/;
-		$list = 3 if /^(CURLM_|CURLMSG_|CURL_(POLL|CSELECT)_)/;
+		$list = 3 if /^CURL(M_|MSG_|MOPT_|_POLL_|_CSELECT_|_SOCKET_TIMEOUT)/;
 		push @{ $out[ $list ] }, $_;
 	}
 	return @out;
