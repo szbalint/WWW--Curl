@@ -37,8 +37,13 @@ typedef enum {
 
 typedef enum {
     SLIST_HTTPHEADER = 0,
+    SLIST_HTTP200ALIASES,
+    SLIST_MAIL_RCPT,
     SLIST_QUOTE,
     SLIST_POSTQUOTE,
+    SLIST_PREQUOTE,
+    SLIST_RESOLVE,
+    SLIST_TELNETOPTIONS,
     SLIST_LAST
 } perl_curl_easy_slist_code;
 
@@ -143,13 +148,28 @@ slist_index(int option)
     switch(option) {
         case CURLOPT_HTTPHEADER:
             return SLIST_HTTPHEADER;
-            break;
+#ifdef CURLOPT_HTTP200ALIASES
+        case CURLOPT_HTTP200ALIASES:
+            return SLIST_HTTP200ALIASES;
+#endif
+#ifdef CURLOPT_MAIL_RCPT
+        case CURLOPT_MAIL_RCPT:
+            return SLIST_MAIL_RCPT;
+#endif
         case CURLOPT_QUOTE:
             return SLIST_QUOTE;
-            break;
         case CURLOPT_POSTQUOTE:
             return SLIST_POSTQUOTE;
-            break;
+#ifdef CURLOPT_PREQUOTE
+        case CURLOPT_PREQUOTE:
+            return SLIST_PREQUOTE;
+#endif
+#ifdef CURLOPT_RESOLVE
+        case CURLOPT_RESOLVE:
+            return SLIST_RESOLVE;
+#endif
+        case CURLOPT_TELNETOPTIONS:
+            return SLIST_TELNETOPTIONS;
     }
     croak("Bad slist index requested\n");
     return SLIST_LAST;
@@ -995,8 +1015,21 @@ curl_easy_setopt(self, option, value, push=0)
 
             /* slist cases */
             case CURLOPT_HTTPHEADER:
+#ifdef CURLOPT_HTTP200ALIASES
+            case CURLOPT_HTTP200ALIASES:
+#endif
+#ifdef CURLOPT_MAIL_RCPT
+            case CURLOPT_MAIL_RCPT:
+#endif
             case CURLOPT_QUOTE:
             case CURLOPT_POSTQUOTE:
+#ifdef CURLOPT_PREQUOTE
+            case CURLOPT_PREQUOTE:
+#endif
+#ifdef CURLOPT_RESOLVE
+            case CURLOPT_RESOLVE:
+#endif
+            case CURLOPT_TELNETOPTIONS:
             {
                 /* This is an option specifying a list, which we put in a curl_slist struct */
                 AV *array = (AV *)SvRV(value);
