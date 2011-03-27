@@ -282,8 +282,7 @@ to Perl code.
 
 =item curl_getdate
 
-Not implemented. This function is easily replaced by Perl code and as such, most likely
-it won't be implemented.
+Works. Not exported, use it as: my $time = WWW::Curl::getdate( $string );
 
 =item curl_global_cleanup
 

@@ -788,6 +788,14 @@ curl__global_cleanup()
     CODE:
         curl_global_cleanup();
 
+time_t
+curl_getdate(timedate)
+	char *timedate;
+	CODE:
+		RETVAL=curl_getdate( timedate, NULL );
+	OUTPUT:
+		RETVAL
+
 MODULE = WWW::Curl    PACKAGE = WWW::Curl::Easy    PREFIX = curl_easy_
 
 BOOT:
