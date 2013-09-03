@@ -4,7 +4,12 @@ The Perl module WWW::Curl provides an interface to the cURL library "libcurl".
 See http://curl.haxx.se/ for more information on cURL and libcurl.
 
 This module requires libcurl and the corresponding header files to be
-installed. You then may install this module via the usual way
+installed. 
+
+For example on Ubuntu installing libcurl4-openssl-dev will satisfy this
+dependency.
+
+You then may install this module via the usual way
 (for installation on Windows please see README.Win32):
 
     perl Makefile.PL
