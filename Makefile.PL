@@ -110,6 +110,7 @@ if (!defined($curl_h)) {
              s/^\s+//;
              next unless /^CURL/;
              chomp;
+             s/^(CURL[A-Za-z0-9_]*_) ([A-Za-z0-9_])/$1$2/;  # Strip intervening space from ISO CPP macro
              s/[,\s].*//;
              s/=.*$//;
              next unless /^\w+$/;
