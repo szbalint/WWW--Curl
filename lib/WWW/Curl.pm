@@ -4,11 +4,28 @@ use strict;
 use warnings;
 use XSLoader;
 
-our $VERSION = '4.15';
-XSLoader::load(__PACKAGE__, $VERSION);
+our $VERSION;
+BEGIN {
+	$VERSION = '4.19_9905';
+	XSLoader::load(__PACKAGE__, $VERSION);
+}
 
 END {
     _global_cleanup();
+}
+
+our $AUTOLOAD;
+sub AUTOLOAD {
+    (my $constname = $AUTOLOAD) =~ s/.*:://;
+    die "&WWW::Curl::constant not defined" if $constname eq 'constant';
+    my ($error, $val) = constant($constname);
+    if ($error) {
+        my (undef,$file,$line) = caller;
+        die "$error at $file line $line.\n";
+    }
+    no strict 'refs';
+    *$AUTOLOAD = sub { $val };
+    goto &$AUTOLOAD;
 }
 
 1;
@@ -96,6 +113,12 @@ See L<curl_easy_setopt(3)> for details of C<setopt()>.
 	$active_handles++;
 
 	while ($active_handles) {
+		my $timeout = $curlm->timeout();
+		if ( $timeout > 1 ) {
+			my ($rv, $wv, $ev) = $curlm->fdset_vec;
+			select $rv, $wv, $ev, $timeout / 1000;
+		}
+
 		my $active_transfers = $curlm->perform;
 		if ($active_transfers != $active_handles) {
 			while (my ($id,$return_value) = $curlm->info_read) {
@@ -223,6 +246,14 @@ Not implemented.
 
 Not implemented.
 
+=item curl_easy_recv
+
+Works, check test 22sendrecv.t for example code.
+
+=item curl_easy_send
+
+Works, check test 22sendrecv.t for example code.
+
 =item curl_easy_unescape
 
 Not implemented. Trivial Perl replacements are available.
@@ -251,8 +282,7 @@ to Perl code.
 
 =item curl_getdate
 
-Not implemented. This function is easily replaced by Perl code and as such, most likely
-it won't be implemented.
+Works. Not exported, use it as: my $time = WWW::Curl::getdate( $string );
 
 =item curl_global_cleanup
 
@@ -288,7 +318,7 @@ Seems to work.
 
 =item curl_version_info
 
-Not yet implemented.
+Works. Returns a hash reference.
 
 =item curl_multi_*
 
@@ -299,6 +329,37 @@ than it's C counterpart. Please see the section about WWW::Curl::Multi above.
 
 This method returns three arrayrefs: the read, write and exception fds libcurl knows about.
 In the case of no file descriptors in the given set, an empty array is returned.
+
+=item $curl_multi->fdset_vec
+
+Retrieves the same information as curl_multi_fdset, but returns three scalars (vectors)
+which can be used directly in select() and vec().
+
+=item curl_multi_setopt
+
+Most of the options should work, however some might not. Please send reports,
+tests and patches to fix those.
+
+=item curl_multi_socket
+
+Not implemented. Simply call socket_action() without bitmask.
+
+=item curl_multi_socket_action
+
+Should work. Check test 23socket-action.t for example code.
+
+=item curl_multi_timeout
+
+Works.
+
+=item curl_share_setopt
+
+Most of the options should work, however some might not. Please send reports,
+tests and patches to fix those.
+
+=item constant
+
+Useless.
 
 =back
 

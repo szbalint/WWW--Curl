@@ -14,24 +14,14 @@ my $body2 = tempfile();
 
 my $url = $ENV{CURL_TEST_URL} || "http://www.google.com";
 
-sub fhbits {
-	my $fhlist = shift;
-	my $bits = '';
-	for (@{$fhlist}) {
-		vec($bits,$_,1) = 1;
-	}
-	return $bits;
-}
 
 sub action_wait {
 	my $curlm = shift;
-	my ($re, $wr, $err) = $curlm->fdset;
-	my ($rin, $win, $ein, $rout, $wout, $eout);
-	$rin = $win = $ein = '';
-	$rin = fhbits($re);
-	$win = fhbits($wr);
-	$ein = $rin | $win;
-	my ($nfound,$timeleft) = select($rin, $win, $ein, 1);
+	my ($rin, $win, $ein) = $curlm->fdset_vec;
+	my $timeout = $curlm->timeout;
+	if ( $timeout > 0 ) {
+		my ($nfound,$timeleft) = select($rin, $win, $ein, $timeout);
+	}
 }
 
     my $curl = new WWW::Curl::Easy;

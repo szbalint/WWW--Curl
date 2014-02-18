@@ -37,8 +37,13 @@ typedef enum {
 
 typedef enum {
     SLIST_HTTPHEADER = 0,
+    SLIST_HTTP200ALIASES,
+    SLIST_MAIL_RCPT,
     SLIST_QUOTE,
     SLIST_POSTQUOTE,
+    SLIST_PREQUOTE,
+    SLIST_RESOLVE,
+    SLIST_TELNETOPTIONS,
     SLIST_LAST
 } perl_curl_easy_slist_code;
 
@@ -56,7 +61,12 @@ typedef struct {
     char errbuf[CURL_ERROR_SIZE+1];
     char *errbufvarname;
     I32 strings_index;
-    char* strings[CURLOPTTYPE_FUNCTIONPOINT - 10000];
+    char* strings[
+	CURLOPT_LASTENTRY > CURLOPTTYPE_OFF_T ? CURLOPT_LASTENTRY - CURLOPTTYPE_OFF_T :
+	CURLOPT_LASTENTRY > CURLOPTTYPE_FUNCTIONPOINT ? CURLOPT_LASTENTRY - CURLOPTTYPE_FUNCTIONPOINT :
+	CURLOPT_LASTENTRY > CURLOPTTYPE_OBJECTPOINT ? CURLOPT_LASTENTRY - CURLOPTTYPE_OBJECTPOINT :
+	CURLOPT_LASTENTRY
+    ];
 
 } perl_curl_easy;
 
@@ -66,17 +76,35 @@ typedef struct {
     struct curl_httppost * last;
 } perl_curl_form;
 
+typedef enum {
+    CALLBACKM_SOCKET = 0,
+    CALLBACKM_TIMER,
+    CALLBACKM_LAST,
+} perl_curl_multi_callback_code;
 
 typedef struct {
 #ifdef __CURL_MULTI_H
     struct CURLM *curlm;
+
+    SV *callback[CALLBACKM_LAST];
+    SV *callback_ctx[CALLBACKM_LAST];
+
 #else
     struct void *curlm;
 #endif
 } perl_curl_multi;
 
+typedef enum {
+    CALLBACKSH_LOCK = 0,
+    CALLBACKSH_UNLOCK,
+    CALLBACKSH_LAST,
+} perl_curl_share_callback_code;
+
 typedef struct {
-    struct CURLSH *curlsh;
+    CURLSH *curlsh;
+
+    SV *callback[CALLBACKSH_LAST];
+    SV *callback_ctx[CALLBACKSH_LAST];
 } perl_curl_share;
 
 
@@ -120,13 +148,28 @@ slist_index(int option)
     switch(option) {
         case CURLOPT_HTTPHEADER:
             return SLIST_HTTPHEADER;
-            break;
+#ifdef CURLOPT_HTTP200ALIASES
+        case CURLOPT_HTTP200ALIASES:
+            return SLIST_HTTP200ALIASES;
+#endif
+#ifdef CURLOPT_MAIL_RCPT
+        case CURLOPT_MAIL_RCPT:
+            return SLIST_MAIL_RCPT;
+#endif
         case CURLOPT_QUOTE:
             return SLIST_QUOTE;
-            break;
         case CURLOPT_POSTQUOTE:
             return SLIST_POSTQUOTE;
-            break;
+#ifdef CURLOPT_PREQUOTE
+        case CURLOPT_PREQUOTE:
+            return SLIST_PREQUOTE;
+#endif
+#ifdef CURLOPT_RESOLVE
+        case CURLOPT_RESOLVE:
+            return SLIST_RESOLVE;
+#endif
+        case CURLOPT_TELNETOPTIONS:
+            return SLIST_TELNETOPTIONS;
     }
     croak("Bad slist index requested\n");
     return SLIST_LAST;
@@ -204,6 +247,47 @@ static void perl_curl_easy_register_callback(perl_curl_easy *self, SV **callback
     }
 }
 
+#ifdef __CURL_MULTI_H
+static void perl_curl_multi_register_callback(perl_curl_multi *self, SV **callback, SV *function)
+{
+    dTHX;
+    if (function && SvOK(function)) {
+	    /* FIXME: need to check the ref-counts here */
+	    if (*callback == NULL) {
+		*callback = newSVsv(function);
+	    } else {
+		SvSetSV(*callback, function);
+	    }
+    } else {
+	    if (*callback != NULL) {
+		sv_2mortal(*callback);
+		*callback = NULL;
+	    }
+    }
+}
+#endif
+
+#if (LIBCURL_VERSION_NUM>=0x070a03)
+static void perl_curl_share_register_callback(perl_curl_share *self, SV **callback, SV *function)
+{
+    dTHX;
+    if (function && SvOK(function)) {
+	    /* FIXME: need to check the ref-counts here */
+	    if (*callback == NULL) {
+		*callback = newSVsv(function);
+	    } else {
+		SvSetSV(*callback, function);
+	    }
+    } else {
+	    if (*callback != NULL) {
+		sv_2mortal(*callback);
+		*callback = NULL;
+	    }
+    }
+}
+#endif
+
+
 /* start of form functions - very un-finished! */
 static perl_curl_form * perl_curl_form_new()
 {
@@ -239,8 +323,16 @@ static perl_curl_multi * perl_curl_multi_new()
 static void perl_curl_multi_delete(perl_curl_multi *self)
 {
 #ifdef __CURL_MULTI_H
+    dTHX;
+    perl_curl_multi_callback_code i;
+
     if (self->curlm) 
         curl_multi_cleanup(self->curlm);
+    for(i=0;i<CALLBACKM_LAST;i++) {
+        sv_2mortal(self->callback[i]);
+        sv_2mortal(self->callback_ctx[i]);
+    }
+
     Safefree(self);
 #endif
 
@@ -258,8 +350,14 @@ static perl_curl_share * perl_curl_share_new()
 /* delete the share */
 static void perl_curl_share_delete(perl_curl_share *self)
 {
+    dTHX;
+    perl_curl_share_callback_code i;
     if (self->curlsh) 
         curl_share_cleanup(self->curlsh);
+    for(i=0;i<CALLBACKSH_LAST;i++) {
+        sv_2mortal(self->callback[i]);
+        sv_2mortal(self->callback_ctx[i]);
+    }
     Safefree(self);
 }
 
@@ -346,7 +444,7 @@ fwrite_wrapper2 (
     perl_curl_easy *self,
     void *call_function,
     void *call_ctx,
-    int curl_infotype)
+    curl_infotype type)
 {
     dTHX;
     dSP;
@@ -372,7 +470,7 @@ fwrite_wrapper2 (
            XPUSHs(&PL_sv_undef);
         }
 
-	XPUSHs(sv_2mortal(newSViv(curl_infotype)));
+	XPUSHs(sv_2mortal(newSViv(type)));
 
         PUTBACK;
         count = perl_call_sv((SV *) call_function, G_SCALAR);
@@ -415,14 +513,14 @@ writeheader_callback_func(const void *ptr, size_t size, size_t nmemb, void *stre
 }
 
 /* debug callback for calling a perl callback */
-static size_t
-debug_callback_func(CURL* handle, int curl_infotype, const void *ptr, size_t size, void *stream)
+static int
+debug_callback_func(CURL* handle, curl_infotype type, char *ptr, size_t size, void *userptr)
 {
     perl_curl_easy *self;
-    self=(perl_curl_easy *)stream;
+    self=(perl_curl_easy *)userptr;
 
     return fwrite_wrapper2(ptr,size,self,
-            self->callback[CALLBACK_DEBUG],self->callback_ctx[CALLBACK_DEBUG],curl_infotype);
+            self->callback[CALLBACK_DEBUG],self->callback_ctx[CALLBACK_DEBUG],type);
 }
 
 /* read callback for calling a perl callback */
@@ -531,40 +629,145 @@ static int progress_callback_func(void *clientp, double dltotal, double dlnow,
 }
 
 
-
-#if 0
-/* awaiting closepolicy prototype */
-int 
-closepolicy_callback_func(void *clientp)
+#if (LIBCURL_VERSION_NUM>=0x070a03)
+static void lock_callback_func(CURL *easy, curl_lock_data data, curl_lock_access locktype, void *userp )
 {
-   dSP;
-   int argc, status;
-   SV *pl_status;
+    dTHX;
+    dSP;
 
-   ENTER;
-   SAVETMPS;
+    int count;
+    perl_curl_easy *self;
+    self=(perl_curl_easy *)userp;
 
-   PUSHMARK(SP);
-   PUTBACK;
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(sp);
+    if (self->callback_ctx[CALLBACKSH_LOCK]) {
+        XPUSHs(sv_2mortal(newSVsv(self->callback_ctx[CALLBACKSH_LOCK])));
+    } else {
+        XPUSHs(&PL_sv_undef);
+    }
+    XPUSHs(sv_2mortal(newSViv( data )));
+    XPUSHs(sv_2mortal(newSViv( locktype )));
 
-   argc = perl_call_sv(closepolicy_callback, G_SCALAR);
-   SPAGAIN;
+    PUTBACK;
+    count = perl_call_sv(self->callback[CALLBACKSH_LOCK], G_SCALAR);
+    SPAGAIN;
 
-   if (argc != 1) {
-      croak("Unexpected number of arguments returned from closefunction callback\n");
-   }
-   pl_status = POPs;
-   status = SvTRUE(pl_status) ? 0 : 1;
+    if (count != 0)
+        croak("callback for CURLSHOPT_LOCKFUNCTION didn't return void\n");
 
-   PUTBACK;
-   FREETMPS;
-   LEAVE;
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+    return;
+}
 
-   return status;
+static void unlock_callback_func(CURL *easy, curl_lock_data data, void *userp )
+{
+    dTHX;
+    dSP;
+
+    int count;
+    perl_curl_easy *self;
+    self=(perl_curl_easy *)userp;
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(sp);
+    if (self->callback_ctx[CALLBACKSH_LOCK]) {
+        XPUSHs(sv_2mortal(newSVsv(self->callback_ctx[CALLBACKSH_LOCK])));
+    } else {
+        XPUSHs(&PL_sv_undef);
+    }
+    XPUSHs(sv_2mortal(newSViv( data )));
+
+    PUTBACK;
+    count = perl_call_sv(self->callback[CALLBACKSH_LOCK], G_SCALAR);
+    SPAGAIN;
+
+    if (count != 0)
+        croak("callback for CURLSHOPT_UNLOCKFUNCTION didn't return void\n");
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+    return;
 }
 #endif
 
-#include "curlopt-constants.c"
+static int socket_callback_func(CURL *easy, curl_socket_t s, int what, void *userp, void *socketp )
+{
+    dTHX;
+    dSP;
+
+    int count;
+    perl_curl_multi *self;
+    self=(perl_curl_multi *)userp;
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(sp);
+    if (self->callback_ctx[CALLBACKM_SOCKET]) {
+        XPUSHs(sv_2mortal(newSVsv(self->callback_ctx[CALLBACKM_SOCKET])));
+    } else {
+        XPUSHs(&PL_sv_undef);
+    }
+    XPUSHs(sv_2mortal(newSVuv( s )));
+    XPUSHs(sv_2mortal(newSViv( what )));
+
+    PUTBACK;
+    count = perl_call_sv(self->callback[CALLBACKM_SOCKET], G_SCALAR);
+    SPAGAIN;
+
+    if (count != 1)
+        croak("callback for CURLMOPT_SOCKETFUNCTION didn't return 1\n");
+
+    count = POPi;
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+    return count;
+}
+
+static int timer_callback_func(CURLM *multi, long timeout_ms, void *userp )
+{
+    dTHX;
+    dSP;
+
+    int count;
+    perl_curl_multi *self;
+    self=(perl_curl_multi *)userp;
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(sp);
+    if (self->callback_ctx[CALLBACKM_TIMER]) {
+        XPUSHs(sv_2mortal(newSVsv(self->callback_ctx[CALLBACKM_TIMER])));
+    } else {
+        XPUSHs(&PL_sv_undef);
+    }
+    XPUSHs(sv_2mortal(newSViv(timeout_ms)));
+
+    PUTBACK;
+    count = perl_call_sv(self->callback[CALLBACKM_TIMER], G_SCALAR);
+    SPAGAIN;
+
+    if (count != 1)
+        croak("callback for CURLMOPT_TIMERFUNCTION didn't return 1\n");
+
+    count = POPi;
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+    return count;
+}
+
+
+#include "const-defenums.h"
+#include "const-c.inc"
 
 typedef perl_curl_easy * WWW__Curl__Easy;
 
@@ -574,12 +777,24 @@ typedef perl_curl_multi * WWW__Curl__Multi;
 
 typedef perl_curl_share * WWW__Curl__Share;
 
+MODULE = WWW::Curl    PACKAGE = WWW::Curl
+
+INCLUDE: const-xs.inc
+
 MODULE = WWW::Curl    PACKAGE = WWW::Curl          PREFIX = curl_
 
 void
 curl__global_cleanup()
     CODE:
         curl_global_cleanup();
+
+time_t
+curl_getdate(timedate)
+	char *timedate;
+	CODE:
+		RETVAL=curl_getdate( timedate, NULL );
+	OUTPUT:
+		RETVAL
 
 MODULE = WWW::Curl    PACKAGE = WWW::Curl::Easy    PREFIX = curl_easy_
 
@@ -588,11 +803,6 @@ BOOT:
 
 
 PROTOTYPES: ENABLE
-
-int
-constant(name)
-    char * name
-
 
 void
 curl_easy_init(...)
@@ -678,7 +888,7 @@ curl_easy_duphandle(self)
 	for (i=0;i<=self->strings_index;i++) {
 		if (self->strings[i] != NULL) {
 			clone->strings[i] = savepv(self->strings[i]);
-			curl_easy_setopt(clone->curl, 10000 + i, clone->strings[i]);
+			curl_easy_setopt(clone->curl, CURLOPTTYPE_OBJECTPOINT + i, clone->strings[i]);
 		}
 	}
 	clone->strings_index = self->strings_index;
@@ -690,6 +900,74 @@ curl_easy_version(...)
         RETVAL=curl_version();
     OUTPUT:
         RETVAL
+
+
+SV *
+curl_easy_version_info()
+	PREINIT:
+		curl_version_info_data *vi;
+		HV *ret;
+	CODE:
+		vi = curl_version_info( CURLVERSION_NOW );
+		if ( vi == NULL )
+			croak( "curl_version_info() returned NULL\n" );
+		ret = newHV();
+		if ( vi->age >= CURLVERSION_FIRST ) {
+			if ( vi->version )
+				hv_store( ret, "version", 7,
+					newSVpv(vi->version, 0), 0 );
+			hv_store( ret, "version_num", 11,
+				newSVuv(vi->version_num), 0 );
+			if ( vi->host )
+				hv_store( ret, "host", 4,
+					newSVpv(vi->host, 0), 0 );
+			hv_store( ret, "features", 8,
+				newSViv(vi->features), 0 );
+			if ( vi->ssl_version )
+				hv_store( ret, "ssl_version", 11,
+					newSVpv(vi->ssl_version, 0), 0 );
+			hv_store( ret, "ssl_version_num", 15,
+				newSViv(vi->ssl_version_num), 0 );
+			if ( vi->libz_version )
+				hv_store( ret, "libz_version", 12,
+					newSVpv(vi->libz_version, 0), 0 );
+			if ( vi->protocols ) {
+				const char * const *p = vi->protocols;
+				AV *prot;
+				prot = (AV *)sv_2mortal((SV *)newAV());
+				while ( *p != NULL ) {
+					av_push( prot, newSVpv( *p, 0 ) );
+					p++;
+				}
+
+				hv_store( ret, "protocols", 9,
+					newRV((SV*)prot), 0 );
+			}
+		}
+		if ( vi->age >= CURLVERSION_SECOND ) {
+			if ( vi->ares )
+				hv_store( ret, "ares", 4,
+					newSVpv(vi->ares, 0), 0 );
+			hv_store( ret, "ares_num", 8,
+				newSViv(vi->ares_num), 0 );
+		}
+		if ( vi->age >= CURLVERSION_THIRD ) {
+			if ( vi->libidn )
+				hv_store( ret, "libidn", 6,
+					newSVpv(vi->libidn, 0), 0 );
+		}
+		if ( vi->age >= CURLVERSION_FOURTH ) {
+			hv_store( ret, "iconv_ver_num", 13,
+				newSViv(vi->iconv_ver_num), 0 );
+			if ( vi->libssh_version )
+				hv_store( ret, "libssh_version", 14,
+					newSVpv(vi->libssh_version, 0), 0 );
+		}
+
+		RETVAL = newRV( (SV *)ret );
+	OUTPUT:
+		RETVAL
+
 
 int
 curl_easy_setopt(self, option, value, push=0)
@@ -745,8 +1023,21 @@ curl_easy_setopt(self, option, value, push=0)
 
             /* slist cases */
             case CURLOPT_HTTPHEADER:
+#ifdef CURLOPT_HTTP200ALIASES
+            case CURLOPT_HTTP200ALIASES:
+#endif
+#ifdef CURLOPT_MAIL_RCPT
+            case CURLOPT_MAIL_RCPT:
+#endif
             case CURLOPT_QUOTE:
             case CURLOPT_POSTQUOTE:
+#ifdef CURLOPT_PREQUOTE
+            case CURLOPT_PREQUOTE:
+#endif
+#ifdef CURLOPT_RESOLVE
+            case CURLOPT_RESOLVE:
+#endif
+            case CURLOPT_TELNETOPTIONS:
             {
                 /* This is an option specifying a list, which we put in a curl_slist struct */
                 AV *array = (AV *)SvRV(value);
@@ -788,7 +1079,7 @@ curl_easy_setopt(self, option, value, push=0)
 
             /* tell curl to redirect STDERR - value should be a glob */
             case CURLOPT_STDERR:
-                RETVAL = curl_easy_setopt(self->curl, option, IoOFP(sv_2io(value)) );
+                RETVAL = curl_easy_setopt(self->curl, option, PerlIO_findFILE( IoOFP(sv_2io(value)) ) );
                 break;
 
             /* not working yet... */
@@ -820,15 +1111,17 @@ curl_easy_setopt(self, option, value, push=0)
                     RETVAL = curl_easy_setopt(self->curl, option, (long)SvIV(value));
                 }
 		else if (option < CURLOPTTYPE_FUNCTIONPOINT) { /* An objectpoint - string */
+			int string_index = option - CURLOPTTYPE_OBJECTPOINT;
 			/* FIXME: Does curl really want NULL for empty strings? */
 			STRLEN dummy = 0;
 			/* Pre 7.17.0, the strings aren't copied by libcurl.*/
 	           	char* pv = SvOK(value) ? SvPV(value, dummy) : "";
 	           	I32 len = (I32)dummy;
 	           	pv = savepvn(pv, len);
-			if (self->strings[option-10000] != NULL) Safefree(self->strings[option-10000]);
-			self->strings[option-10000] = pv;
-			if (self->strings_index < option - 10000) self->strings_index = option - 10000;
+			if (self->strings[string_index] != NULL)
+                            Safefree(self->strings[string_index]);
+			self->strings[string_index] = pv;
+			if (self->strings_index < string_index) self->strings_index = string_index;
 			RETVAL = curl_easy_setopt(self->curl, option, SvOK(value) ? pv : NULL);
 		}
 #ifdef CURLOPTTYPE_OFF_T
@@ -943,6 +1236,61 @@ curl_easy_errbuf(self)
     OUTPUT:
         RETVAL
 
+size_t
+curl_easy_send( self, buffer )
+	WWW::Curl::Easy self
+	SV *buffer
+	CODE:
+#if (LIBCURL_VERSION_NUM>=0x071202)
+		CURLcode ret;
+		STRLEN len;
+		const char *pv;
+		size_t out_len;
+
+		if ( ! SvOK( buffer ) )
+			croak( "buffer is not valid\n" );
+
+		pv = SvPV( buffer, len );
+		ret = curl_easy_send( self->curl, pv, len, &out_len );
+		if ( ret != CURLE_OK )
+			croak( "curl_easy_send() didn't return CURLE_OK\n" );
+
+		RETVAL = out_len;
+#else
+		croak( "curl_easy_send() not available in curl before 7.18.2\n" );
+		RETVAL = 0;
+#endif
+	OUTPUT:
+		RETVAL
+
+int
+curl_easy_recv( self, buffer, length )
+	WWW::Curl::Easy self
+	SV *buffer
+	size_t length
+	CODE:
+#if (LIBCURL_VERSION_NUM>=0x071202)
+		CURLcode ret;
+		size_t out_len;
+		char *tmpbuf;
+
+		Newx( tmpbuf, length, char);
+		ret = curl_easy_recv( self->curl, tmpbuf, length, &out_len );
+		if ( ret != CURLE_OK )
+			sv_setsv( buffer, &PL_sv_undef );
+		else
+			sv_setpvn( buffer, tmpbuf, out_len );
+
+		Safefree( tmpbuf );
+		RETVAL = ret;
+#else
+		croak( "curl_easy_recv() not available in curl before 7.18.2\n" );
+		RETVAL = 0;
+#endif
+	OUTPUT:
+		RETVAL
+
+
 int
 curl_easy_cleanup(self)
     WWW::Curl::Easy self
@@ -975,10 +1323,6 @@ curl_easy_strerror(self, errornum)
         RETVAL
 
 MODULE = WWW::Curl    PACKAGE = WWW::Curl::Form    PREFIX = curl_form_
-
-int
-constant(name)
-    char * name
 
 void
 curl_form_new(...)
@@ -1087,7 +1431,6 @@ curl_multi_info_read(self)
 	};
 	if (easy) {
 		curl_easy_getinfo(easy, CURLINFO_PRIVATE, &stashid);
-		curl_easy_setopt(easy, CURLINFO_PRIVATE, NULL);
 		curl_multi_remove_handle(self->curlm, easy);
 		XPUSHs(sv_2mortal(newSVpv(stashid,0)));
 		XPUSHs(sv_2mortal(newSViv(res)));
@@ -1133,6 +1476,101 @@ curl_multi_fdset(self)
 	XPUSHs(sv_2mortal(newRV(sv_2mortal((SV *) writeset))));
 	XPUSHs(sv_2mortal(newRV(sv_2mortal((SV *) excepset))));
 
+void
+curl_multi_fdset_vec(self)
+    WWW::Curl::Multi self
+    PREINIT:
+        fd_set fdread;
+        fd_set fdwrite;
+        fd_set fdexcep;
+        int maxfd;
+        int i;
+        int vecsize;
+        unsigned char readset[ sizeof( fd_set ) ] = { 0 };
+        unsigned char writeset[ sizeof( fd_set ) ] = { 0 };
+        unsigned char excepset[ sizeof( fd_set ) ] = { 0 };
+    PPCODE:
+        FD_ZERO(&fdread);
+        FD_ZERO(&fdwrite);
+        FD_ZERO(&fdexcep);
+
+        curl_multi_fdset(self->curlm, &fdread, &fdwrite, &fdexcep, &maxfd);
+        vecsize = ( maxfd + 8 ) / 8;
+
+        if ( maxfd != -1 ) {
+            for (i=0;i <= maxfd;i++) {
+                if (FD_ISSET(i, &fdread)) {
+                    readset[ i / 8 ] |= 1 << ( i % 8 );
+                }
+                if (FD_ISSET(i, &fdwrite)) {
+                    writeset[ i / 8 ] |= 1 << ( i % 8 );
+                }
+                if (FD_ISSET(i, &fdexcep)) {
+                    excepset[ i / 8 ] |= 1 << ( i % 8 );
+                }
+            }
+        }
+	XPUSHs(sv_2mortal(newSVpvn(readset, vecsize)));
+	XPUSHs(sv_2mortal(newSVpvn(writeset, vecsize)));
+	XPUSHs(sv_2mortal(newSVpvn(excepset, vecsize)));
+
+long
+curl_multi_timeout(self)
+    WWW::Curl::Multi self
+    PREINIT:
+        long timeout;
+        CURLMcode ret;
+    CODE:
+        if ( curl_multi_timeout(self->curlm, &timeout) != CURLM_OK )
+            croak( "curl_multi_timeout() didn't return CURLM_OK" );
+
+        RETVAL = timeout;
+    OUTPUT:
+        RETVAL
+
+int
+curl_multi_setopt(self, option, value)
+        WWW::Curl::Multi self
+        int option
+        SV * value
+    CODE:
+        RETVAL=0;
+#ifdef __CURL_MULTI_H
+        RETVAL=CURLM_OK;
+        switch(option) {
+            case CURLMOPT_SOCKETFUNCTION:
+            case CURLMOPT_SOCKETDATA:
+                curl_multi_setopt(self->curlm, CURLMOPT_SOCKETFUNCTION, SvOK(value) ? socket_callback_func : NULL);
+                curl_multi_setopt(self->curlm, CURLMOPT_SOCKETDATA, SvOK(value) ? self : NULL);
+                perl_curl_multi_register_callback(self,
+			option == CURLMOPT_SOCKETDATA ? &(self->callback_ctx[CALLBACKM_SOCKET]) : &(self->callback[CALLBACKM_SOCKET]),
+			value);
+                break;
+            case CURLMOPT_TIMERFUNCTION:
+            case CURLMOPT_TIMERDATA:
+                curl_multi_setopt(self->curlm, CURLMOPT_TIMERFUNCTION, SvOK(value) ? timer_callback_func : NULL);
+                curl_multi_setopt(self->curlm, CURLMOPT_TIMERDATA, SvOK(value) ? self : NULL);
+                perl_curl_multi_register_callback(self,
+			option == CURLMOPT_TIMERDATA ? &(self->callback_ctx[CALLBACKM_TIMER]) : &(self->callback[CALLBACKM_TIMER]),
+			value);
+                break;
+
+            /* default cases */
+            default:
+                if (option < CURLOPTTYPE_OBJECTPOINT) { /* A long (integer) value */
+                    RETVAL = curl_multi_setopt(self->curlm, option, (long)SvIV(value));
+                }
+                else {
+                    croak("Unknown curl multi option");
+                }
+                ;
+                break;
+        };
+#endif
+    OUTPUT:
+        RETVAL
+
+
 int
 curl_multi_perform(self)
     WWW::Curl::Multi self
@@ -1143,32 +1581,26 @@ curl_multi_perform(self)
         while(CURLM_CALL_MULTI_PERFORM ==
             curl_multi_perform(self->curlm, &remaining));
 	    RETVAL = remaining;
-        /* while(remaining) {
-            struct timeval timeout;
-            int rc;
-            fd_set fdread;
-            fd_set fdwrite;
-            fd_set fdexcep;
-            int maxfd;
-            FD_ZERO(&fdread);
-            FD_ZERO(&fdwrite);
-            FD_ZERO(&fdexcep);
-            timeout.tv_sec = 1;
-            timeout.tv_usec = 0;
-            curl_multi_fdset(self->curlm, &fdread, &fdwrite, &fdexcep, &maxfd);
-            rc = select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
-            switch(rc) {
-              case -1:
-                  break;
-              default:
-                  while(CURLM_CALL_MULTI_PERFORM ==
-                      curl_multi_perform(self->curlm, &remaining));
-                  break;
-            }
-        } */
 #endif
 	OUTPUT:
 		RETVAL
+
+int
+curl_multi_socket_action(self, sockfd=CURL_SOCKET_BAD, ev_bitmask=0)
+    WWW::Curl::Multi self
+    int sockfd;
+    int ev_bitmask;
+    PREINIT:
+        int remaining;
+    CODE:
+#ifdef __CURL_MULTI_H
+        while(CURLM_CALL_MULTI_PERFORM ==
+            curl_multi_socket_action(self->curlm, (curl_socket_t) sockfd, ev_bitmask, &remaining));
+        RETVAL = remaining;
+#endif
+	OUTPUT:
+		RETVAL
+
 
 void
 curl_multi_DESTROY(self)
@@ -1195,10 +1627,6 @@ curl_multi_strerror(self, errornum)
 MODULE = WWW::Curl    PACKAGE = WWW::Curl::Share    PREFIX = curl_share_
 
 PROTOTYPES: ENABLE
-
-int
-constant(name)
-    char * name
 
 void
 curl_share_new(...)
@@ -1235,17 +1663,27 @@ curl_share_setopt(self, option, value)
 #if (LIBCURL_VERSION_NUM>=0x070a03)
         switch(option) {
             /* slist cases */
+            case CURLSHOPT_LOCKFUNC:
+                curl_share_setopt(self->curlsh, CURLSHOPT_LOCKFUNC, SvOK(value) ? lock_callback_func : NULL);
+                curl_share_setopt(self->curlsh, CURLSHOPT_USERDATA, SvOK(value) ? self : NULL);
+                perl_curl_share_register_callback(self,&(self->callback[CALLBACKSH_LOCK]), value);
+                break;
+            case CURLSHOPT_UNLOCKFUNC:
+                curl_share_setopt(self->curlsh, CURLSHOPT_UNLOCKFUNC, SvOK(value) ? unlock_callback_func : NULL);
+                curl_share_setopt(self->curlsh, CURLSHOPT_USERDATA, SvOK(value) ? self : NULL);
+                perl_curl_share_register_callback(self,&(self->callback[CALLBACKSH_UNLOCK]), value);
+                break;
+            case CURLSHOPT_USERDATA:
+                perl_curl_share_register_callback(self,&(self->callback_ctx[CALLBACKSH_LOCK]), value);
+                break;
             case CURLSHOPT_SHARE:
             case CURLSHOPT_UNSHARE:
-                if (option < CURLOPTTYPE_OBJECTPOINT) { /* An integer value: */
-                    RETVAL = curl_share_setopt(self->curlsh, option, (long)SvIV(value));
-                } else { /* A char * value: */
-                    /* FIXME: Does curl really want NULL for empty strings? */
-                    STRLEN dummy;
-                    char *pv = SvPV(value, dummy);
-                    RETVAL = curl_share_setopt(self->curlsh, option, *pv ? pv : NULL);
-                };
+                RETVAL = curl_share_setopt(self->curlsh, option, (long)SvIV(value));
                 break;
+            default:
+                croak("Unknown curl share option");
+                break;
+
         };
 #else
         croak("curl_share_setopt not supported in your libcurl version");
