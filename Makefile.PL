@@ -101,12 +101,16 @@ if (!defined($curl_h)) {
      my @syms;
      my $has_cpp = 0;
      open(H_IN, "-|", "cpp", $curl_h) and $has_cpp++;
-     unless ($has_cpp) { open(H_IN, "<", $curl_h) or die("Can't open curl.h at path $curl_h, because: ".$!); }
+     unless ($has_cpp) {
+         warn "No working cpp ($!).  Parsing curl.h in Perl";
+         open(H_IN, "<", $curl_h) or die("Can't open curl.h at path $curl_h, because: ".$!);
+     }
      while ( <H_IN> ) {
          if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
              s/^\s+//;
              next unless /^CURL/;
              chomp;
+             s/^(CURL[A-Za-z0-9_]*_) ([A-Za-z0-9_])/$1$2/;  # Strip intervening space from ISO CPP macro
              s/[,\s].*//;
              s/=.*$//;
              next unless /^\w+$/;
