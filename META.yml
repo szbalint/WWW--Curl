@@ -23,5 +23,5 @@ no_index:
 requires:
   perl: 5.6.1
 resources:
-  repository: http://github.com/szbalint/WWW--Curl
+  repository: https://github.com/szbalint/WWW--Curl
 version: 4.16

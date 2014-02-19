@@ -58,10 +58,9 @@ Curl multi support has been added by Sebastian Riedel <sri at oook.de>
 The current maintainers are Cris Bailiff <c.bailiff+curl at devsecure.com> and
 Bálint Szilakszi <szbalint at cpan.org>
 
-The latest version is available on CPAN and can be downloaded from
-http://search.cpan.org/perldoc?WWW::Curl .
+The latest version is available on CPAN - https://metacpan.org/pod/WWW::Curl .
 
-The source code repository is available at http://github.com/szbalint/WWW--Curl/tree .
+The source code repository is available at https://github.com/szbalint/WWW--Curl .
  
 Copyright (C) 2000-2005, 2008-2010 Daniel Stenberg, Cris Bailiff, Bálint Szilakszi, et al.  
 You may opt to use, copy, modify, merge, publish, distribute and/or sell
