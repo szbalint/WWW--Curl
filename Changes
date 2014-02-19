@@ -1,7 +1,9 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
-4.16 Wed May 15 2013: - Theo Schlossnagle <jesus at span.org>
+4.16 ???: - Balint Szilakszi <szbalint at cpan.org>
 
-    - Support for CURLOPT_RESOLVE (an slist option)
+    - Support for CURLOPT_RESOLVE (an slist option) [Theo Schlossnagle]
+    - Fixing t/19multi.t test failures when using a threaded resolver for libcurl.
+    - Improved constant parsing when using ISO-compliant CPP. [tsibley]
 
 4.15 Sun Nov 28 2010: - Balint Szilakszi <szbalint at cpan.org>
 
