@@ -18,7 +18,6 @@ MANIFEST
 META.yml
 README
 README.Win32
-SIGNATURE
 t/00constants.t
 t/01basic.t
 t/02callbacks.t
