@@ -133,7 +133,7 @@ a new batch of easy handles for processing.
 
 =head1 WWW::Curl::Share
 
-	use WWW::CURL::Share;
+	use WWW::Curl::Share;
 	my $curlsh = new WWW::Curl::Share;
 	$curlsh->setopt(CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
 	$curlsh->setopt(CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
