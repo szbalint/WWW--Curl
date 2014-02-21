@@ -6,7 +6,7 @@ use inc::Module::Install;
 name			'WWW-Curl';
 abstract		'Perl extension interface for libcurl';
 author			'Cris Bailiff <c.bailiff+curl at devsecure.com>';
-license			'MPL or MIT/X-derivate';
+license			'mit';
 perl_version		'5.006001';
 no_index		directory => 'template';
 repository		'http://github.com/szbalint/WWW--Curl';

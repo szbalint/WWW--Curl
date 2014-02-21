@@ -390,13 +390,12 @@ repackaged the module into a more modern form.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2000-2005,2008-2010 Daniel Stenberg, Cris Bailiff,
+Copyright (C) 2000-2005,2008-2014 Daniel Stenberg, Cris Bailiff,
 Sebastian Riedel, Balint Szilakszi et al.
 
 You may opt to use, copy, modify, merge, publish, distribute and/or sell
 copies of the Software, and permit persons to whom the Software is furnished
-to do so, under the terms of the MPL or the MIT/X-derivate licenses. You may
-pick one of these licenses.
+to do so, under the terms of the MIT license.
 
 =head1 SEE ALSO
 

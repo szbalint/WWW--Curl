@@ -1,4 +1,9 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
+4.17 Fri Feb 21 2014: - Balint Szilakszi <szbalint at cpan.org>
+
+    - Fixing build process for old libcurl versions without CURLOPT_RESOLVE.
+    - License is now MIT only.
+
 4.16 Thu Feb 20 2014: - Balint Szilakszi <szbalint at cpan.org>
 
     - Support for CURLOPT_RESOLVE (an slist option) [Theo Schlossnagle]
