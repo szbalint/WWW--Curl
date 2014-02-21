@@ -39,7 +39,9 @@ typedef enum {
     SLIST_HTTPHEADER = 0,
     SLIST_QUOTE,
     SLIST_POSTQUOTE,
+#ifdef CURLOPT_RESOLVE
     SLIST_RESOLVE,
+#endif
     SLIST_LAST
 } perl_curl_easy_slist_code;
 
@@ -128,9 +130,11 @@ slist_index(int option)
         case CURLOPT_POSTQUOTE:
             return SLIST_POSTQUOTE;
             break;
+#ifdef CURLOPT_RESOLVE
         case CURLOPT_RESOLVE:
             return SLIST_RESOLVE;
             break;
+#endif
     }
     croak("Bad slist index requested\n");
     return SLIST_LAST;
@@ -751,7 +755,9 @@ curl_easy_setopt(self, option, value, push=0)
             case CURLOPT_HTTPHEADER:
             case CURLOPT_QUOTE:
             case CURLOPT_POSTQUOTE:
+#ifdef CURLOPT_RESOLVE
             case CURLOPT_RESOLVE:
+#endif
             {
                 /* This is an option specifying a list, which we put in a curl_slist struct */
                 AV *array = (AV *)SvRV(value);
