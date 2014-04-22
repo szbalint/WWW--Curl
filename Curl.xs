@@ -1247,14 +1247,7 @@ curl_share_setopt(self, option, value)
             /* slist cases */
             case CURLSHOPT_SHARE:
             case CURLSHOPT_UNSHARE:
-                if (option < CURLOPTTYPE_OBJECTPOINT) { /* An integer value: */
-                    RETVAL = curl_share_setopt(self->curlsh, option, (long)SvIV(value));
-                } else { /* A char * value: */
-                    /* FIXME: Does curl really want NULL for empty strings? */
-                    STRLEN dummy;
-                    char *pv = SvPV(value, dummy);
-                    RETVAL = curl_share_setopt(self->curlsh, option, *pv ? pv : NULL);
-                };
+                RETVAL = curl_share_setopt(self->curlsh, option, (long)SvIV(value));
                 break;
         };
 #else
