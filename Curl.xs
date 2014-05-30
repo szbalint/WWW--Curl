@@ -142,7 +142,7 @@ slist_index(int option)
 static perl_curl_easy * perl_curl_easy_new()
 {
     perl_curl_easy *self;
-    Newz(1, self, 1, perl_curl_easy);
+    Newxz(self, 1, perl_curl_easy);
     self->curl=curl_easy_init();
     return self;
 }
@@ -150,7 +150,7 @@ static perl_curl_easy * perl_curl_easy_new()
 static perl_curl_easy * perl_curl_easy_duphandle(perl_curl_easy *orig)
 {
     perl_curl_easy *self;
-    Newz(1, self, 1, perl_curl_easy);
+    Newxz(self, 1, perl_curl_easy);
     self->curl=curl_easy_duphandle(orig->curl);
     return self;
 }
@@ -213,7 +213,7 @@ static void perl_curl_easy_register_callback(pTHX_ perl_curl_easy *self, SV **ca
 static perl_curl_form * perl_curl_form_new()
 {
     perl_curl_form *self;
-    Newz(1, self, 1, perl_curl_form);
+    Newxz(self, 1, perl_curl_form);
     self->post=NULL;
     self->last=NULL;
     return self;
@@ -231,7 +231,7 @@ static void perl_curl_form_delete(perl_curl_form *self)
 static perl_curl_multi * perl_curl_multi_new()
 {
     perl_curl_multi *self;
-    Newz(1, self, 1, perl_curl_multi);
+    Newxz(self, 1, perl_curl_multi);
 #ifdef __CURL_MULTI_H
     self->curlm=curl_multi_init();
 #else
@@ -255,7 +255,7 @@ static void perl_curl_multi_delete(perl_curl_multi *self)
 static perl_curl_share * perl_curl_share_new()
 {
     perl_curl_share *self;
-    Newz(1, self, 1, perl_curl_share);
+    Newxz(self, 1, perl_curl_share);
     self->curlsh=curl_share_init();
     return self;
 }
