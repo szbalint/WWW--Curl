@@ -155,9 +155,8 @@ static perl_curl_easy * perl_curl_easy_duphandle(perl_curl_easy *orig)
     return self;
 }
 
-static void perl_curl_easy_delete(perl_curl_easy *self)
+static void perl_curl_easy_delete(pTHX_ perl_curl_easy *self)
 {
-    dTHX;
     perl_curl_easy_slist_code index;
     perl_curl_easy_callback_code i;
     
@@ -193,9 +192,8 @@ static void perl_curl_easy_delete(perl_curl_easy *self)
 
 /* Register a callback function */
 
-static void perl_curl_easy_register_callback(perl_curl_easy *self, SV **callback, SV *function)
+static void perl_curl_easy_register_callback(pTHX_ perl_curl_easy *self, SV **callback, SV *function)
 {
-    dTHX;
     if (function && SvOK(function)) {	
 	    /* FIXME: need to check the ref-counts here */
 	    if (*callback == NULL) {
@@ -297,14 +295,8 @@ write_to_ctx(pTHX_ SV* const call_ctx, const char* const ptr, size_t const n) {
 
 /* generic fwrite callback, which decides which callback to call */
 static size_t
-fwrite_wrapper (
-    const void *ptr,
-    size_t size,
-    size_t nmemb,
-    perl_curl_easy *self,
-    void *call_function,
-    void *call_ctx)
-{
+fwrite_wrapper (const void *ptr, size_t size, size_t nmemb, perl_curl_easy *self, void *call_function, void *call_ctx) {
+
     dTHX;
     if (call_function) { /* We are doing a callback to perl */
         dSP;
@@ -434,7 +426,7 @@ debug_callback_func(CURL* handle, int curl_infotype, const void *ptr, size_t siz
 
 /* read callback for calling a perl callback */
 static size_t
-read_callback_func( void *ptr, size_t size, size_t nmemb, void *stream)
+read_callback_func(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     dTHX;
     dSP ;
@@ -678,8 +670,8 @@ curl_easy_duphandle(self)
         curl_easy_setopt(clone->curl, CURLOPT_ERRORBUFFER, clone->errbuf);
 
         for(i=0;i<CALLBACK_LAST;i++) {
-           perl_curl_easy_register_callback(clone,&(clone->callback[i]), self->callback[i]);
-           perl_curl_easy_register_callback(clone,&(clone->callback_ctx[i]), self->callback_ctx[i]);
+           perl_curl_easy_register_callback(aTHX_ clone,&(clone->callback[i]), self->callback[i]);
+           perl_curl_easy_register_callback(aTHX_ clone,&(clone->callback_ctx[i]), self->callback_ctx[i]);
         };
 	
 	for (i=0;i<=self->strings_index;i++) {
@@ -710,44 +702,44 @@ curl_easy_setopt(self, option, value, push=0)
             /* SV * to user contexts for callbacks - any SV (glob,scalar,ref) */
             case CURLOPT_FILE:
             case CURLOPT_INFILE:
-                perl_curl_easy_register_callback(self,
+                perl_curl_easy_register_callback(aTHX_ self,
                         &(self->callback_ctx[callback_index(option)]), value);
                 break;
             case CURLOPT_WRITEHEADER:
 		curl_easy_setopt(self->curl, CURLOPT_HEADERFUNCTION, SvOK(value) ? header_callback_func : NULL);
         	curl_easy_setopt(self->curl, option, SvOK(value) ? self : NULL);
-                perl_curl_easy_register_callback(self,&(self->callback_ctx[callback_index(option)]),value);
+                perl_curl_easy_register_callback(aTHX_ self,&(self->callback_ctx[callback_index(option)]),value);
                 break;
             case CURLOPT_PROGRESSDATA:
 		curl_easy_setopt(self->curl, CURLOPT_PROGRESSFUNCTION, SvOK(value) ? progress_callback_func : NULL);
         	curl_easy_setopt(self->curl, option, SvOK(value) ? self : NULL); 
-                perl_curl_easy_register_callback(self,&(self->callback_ctx[callback_index(option)]), value);
+                perl_curl_easy_register_callback(aTHX_ self,&(self->callback_ctx[callback_index(option)]), value);
                 break;
             case CURLOPT_DEBUGDATA:
 		curl_easy_setopt(self->curl, CURLOPT_DEBUGFUNCTION, SvOK(value) ? debug_callback_func : NULL);
         	curl_easy_setopt(self->curl, option, SvOK(value) ? self : NULL); 
-                perl_curl_easy_register_callback(self,&(self->callback_ctx[callback_index(option)]), value);
+                perl_curl_easy_register_callback(aTHX_ self,&(self->callback_ctx[callback_index(option)]), value);
                 break;
 
             /* SV * to a subroutine ref */
             case CURLOPT_WRITEFUNCTION:
             case CURLOPT_READFUNCTION:
-		perl_curl_easy_register_callback(self,&(self->callback[callback_index(option)]), value);
+		perl_curl_easy_register_callback(aTHX_ self,&(self->callback[callback_index(option)]), value);
 		break;
             case CURLOPT_HEADERFUNCTION:
 		curl_easy_setopt(self->curl, option, SvOK(value) ? header_callback_func : NULL);
 		curl_easy_setopt(self->curl, CURLOPT_WRITEHEADER, SvOK(value) ? self : NULL);
-		perl_curl_easy_register_callback(self,&(self->callback[callback_index(option)]), value);
+		perl_curl_easy_register_callback(aTHX_ self,&(self->callback[callback_index(option)]), value);
 		break;
             case CURLOPT_PROGRESSFUNCTION:
         	curl_easy_setopt(self->curl, option, SvOK(value) ? progress_callback_func : NULL);
 		curl_easy_setopt(self->curl, CURLOPT_PROGRESSDATA, SvOK(value) ? self : NULL);
-		perl_curl_easy_register_callback(self,&(self->callback[callback_index(option)]), value);
+		perl_curl_easy_register_callback(aTHX_ self,&(self->callback[callback_index(option)]), value);
 		break;
             case CURLOPT_DEBUGFUNCTION:
 		curl_easy_setopt(self->curl, option, SvOK(value) ? debug_callback_func : NULL);
 		curl_easy_setopt(self->curl, CURLOPT_DEBUGDATA, SvOK(value) ? self : NULL);
-		perl_curl_easy_register_callback(self,&(self->callback[callback_index(option)]), value);
+		perl_curl_easy_register_callback(aTHX_ self,&(self->callback[callback_index(option)]), value);
 		break;
 
             /* slist cases */
@@ -966,7 +958,7 @@ void
 curl_easy_DESTROY(self)
     WWW::Curl::Easy self
     CODE:
-        perl_curl_easy_delete(self);
+        perl_curl_easy_delete(aTHX_ self);
 
 SV *
 curl_easy_strerror(self, errornum)
