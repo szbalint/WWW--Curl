@@ -7,7 +7,7 @@ name			'WWW-Curl';
 abstract		'Perl extension interface for libcurl';
 author			'Cris Bailiff <c.bailiff+curl at devsecure.com>';
 license			'mit';
-perl_version		'5.006001';
+perl_version		'5.008001';
 no_index		directory => 'template';
 repository		'http://github.com/szbalint/WWW--Curl';
 # This is a hack. If you have libcurl installed, just specify curl.h below
