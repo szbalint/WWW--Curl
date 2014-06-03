@@ -856,9 +856,6 @@ curl_easy_setopt(self, option, value, push=0)
 
 int
 internal_setopt(self, option, value)
-    WWW::Curl::Easy self
-    int option
-    int value
     CODE:
         croak("internal_setopt no longer supported - use a callback\n");
         RETVAL = 0;
@@ -1097,7 +1094,7 @@ curl_multi_info_read(self)
 		XSRETURN_EMPTY;
 	}
 
-SV *
+void
 curl_multi_fdset(self)
     WWW::Curl::Multi self
     PREINIT:
