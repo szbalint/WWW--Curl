@@ -47,7 +47,7 @@ my $head = tempfile();
 ok(! $curl->setopt(CURLOPT_WRITEHEADER, $head), "Setting CURLOPT_WRITEHEADER"); #6
 
 my $body = tempfile();
-ok(! $curl->setopt(CURLOPT_FILE, $body), "Setting CURLOPT_FILE"); #7
+ok(! $curl->setopt(CURLOPT_WRITEDATA, $body), "Setting CURLOPT_WRITEDATA"); #7
 
 my @myheaders;
 $myheaders[0] = "User-Agent: Verifying SSL functions in WWW::Curl perl interface for libcURL";

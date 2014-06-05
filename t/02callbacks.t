@@ -22,7 +22,7 @@ my $head = tempfile();
 $curl->setopt(CURLOPT_WRITEHEADER, $head);
 
 my $body = tempfile();
-$curl->setopt(CURLOPT_FILE,$body);
+$curl->setopt(CURLOPT_WRITEDATA,$body);
 
 $curl->setopt(CURLOPT_URL, $url);
 

@@ -61,7 +61,7 @@ sub body_callback {
 $curl->setopt(CURLOPT_WRITEFUNCTION, \&body_callback);
 
 my $body="";
-$curl->setopt(CURLOPT_FILE,\$body);
+$curl->setopt(CURLOPT_WRITEDATA,\$body);
 print "ok ".++$count."\n";
 
 $curl->setopt(CURLOPT_URL, $url);

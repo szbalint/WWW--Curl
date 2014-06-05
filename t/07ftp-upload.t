@@ -34,7 +34,7 @@ $curl->setopt(CURLOPT_WRITEHEADER, \*HEAD);
 print "ok ".++$count."\n";
 
 open BODY, ">body.out";
-$curl->setopt(CURLOPT_FILE, \*body);
+$curl->setopt(CURLOPT_WRITEDATA, \*body);
 print "ok ".++$count."\n";
 
 $curl->setopt(CURLOPT_URL, $url);

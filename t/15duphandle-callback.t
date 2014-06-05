@@ -28,7 +28,7 @@ my $head_called = 0;
 	ok(! $curl->setopt(CURLOPT_WRITEHEADER, $head), "Setting CURLOPT_WRITEHEADER"); #6
 
 	my $body = tempfile();
-	ok(! $curl->setopt(CURLOPT_FILE, $body), "Setting CURLOPT_FILE"); #7
+	ok(! $curl->setopt(CURLOPT_WRITEDATA, $body), "Setting CURLOPT_WRITEDATA"); #7
 
 
 	my @myheaders;

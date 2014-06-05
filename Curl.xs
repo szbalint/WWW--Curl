@@ -88,12 +88,12 @@ callback_index(int option)
 {
     switch(option) {
         case CURLOPT_WRITEFUNCTION:
-        case CURLOPT_FILE:
+        case CURLOPT_WRITEDATA:
             return CALLBACK_WRITE;
             break;
 
         case CURLOPT_READFUNCTION:
-        case CURLOPT_INFILE:
+        case CURLOPT_READDATA:
             return CALLBACK_READ;
             break;
 
@@ -620,8 +620,8 @@ curl_easy_init(...)
         curl_easy_setopt(self->curl, CURLOPT_READFUNCTION, read_callback_func);
         
 	/* set our own object as the context for all curl callbacks */
-        curl_easy_setopt(self->curl, CURLOPT_FILE, self); 
-        curl_easy_setopt(self->curl, CURLOPT_INFILE, self); 
+        curl_easy_setopt(self->curl, CURLOPT_WRITEDATA, self); 
+        curl_easy_setopt(self->curl, CURLOPT_READDATA, self); 
         
 	/* we always collect this, in case it's wanted */
         curl_easy_setopt(self->curl, CURLOPT_ERRORBUFFER, self->errbuf);
@@ -665,8 +665,8 @@ curl_easy_duphandle(self)
 	}
 
         /* set our own object as the context for all curl callbacks */
-        curl_easy_setopt(clone->curl, CURLOPT_FILE, clone); 
-        curl_easy_setopt(clone->curl, CURLOPT_INFILE, clone); 
+        curl_easy_setopt(clone->curl, CURLOPT_WRITEDATA, clone); 
+        curl_easy_setopt(clone->curl, CURLOPT_READDATA, clone); 
         curl_easy_setopt(clone->curl, CURLOPT_ERRORBUFFER, clone->errbuf);
 
         for(i=0;i<CALLBACK_LAST;i++) {
@@ -700,10 +700,9 @@ curl_easy_setopt(self, option, value, push=0)
         RETVAL=CURLE_OK;
         switch(option) {
             /* SV * to user contexts for callbacks - any SV (glob,scalar,ref) */
-            case CURLOPT_FILE:
-            case CURLOPT_INFILE:
-                perl_curl_easy_register_callback(aTHX_ self,
-                        &(self->callback_ctx[callback_index(option)]), value);
+            case CURLOPT_WRITEDATA:
+            case CURLOPT_READDATA:
+                perl_curl_easy_register_callback(aTHX_ self, &(self->callback_ctx[callback_index(option)]), value);
                 break;
             case CURLOPT_WRITEHEADER:
 		curl_easy_setopt(self->curl, CURLOPT_HEADERFUNCTION, SvOK(value) ? header_callback_func : NULL);
