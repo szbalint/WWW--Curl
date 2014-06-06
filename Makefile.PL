@@ -80,86 +80,100 @@ if (defined($ARGV[0])) {
     unshift @includes, $ARGV[0];
 };
 
-my $curl_d = "";
-my $curl_h;
+my ($curl_d,$curl_h,$multi_h) = ("");
 
 # otherwise try a list of common locations
 foreach my $try (@includes) {
     if (-f $try . "/curl/curl.h") {
         $curl_d = $try;
         $curl_h = $try . "/curl/curl.h";
+        $multi_h = $try . "/curl/multi.h";
         last;
     }
 }
 
-if (!defined($curl_h)) {
-     die "Cannot find curl.h - cannot build constants files  - see Makefile.PL";
-} else {
-     my %constants;
-     $curl_d = "-I" . $curl_d;
-     print "Found curl.h in $curl_h\n";
-     my @syms;
-     my $has_cpp = 0;
-     open(H_IN, "-|", "cpp", $curl_h) and $has_cpp++;
-     unless ($has_cpp) {
-         warn "No working cpp ($!).  Parsing curl.h in Perl";
-         open(H_IN, "<", $curl_h) or die("Can't open curl.h at path $curl_h, because: ".$!);
-     }
-     while ( <H_IN> ) {
-         if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
-             s/^\s+//;
-             next unless /^CURL/;
-             chomp;
-             s/^(CURL[A-Za-z0-9_]*_) ([A-Za-z0-9_])/$1$2/;  # Strip intervening space from ISO CPP macro
-             s/[,\s].*//;
-             s/=.*$//;
-             next unless /^\w+$/;
-             push @syms, $_;
-         }
-    }
-    close H_IN;
-    open (H, "<", $curl_h) or die ("Cannot open $curl_h: ".$!);
-    while(<H>) {
-        if (/^#define (CURL[A-Za-z0-9_]*)/) {
-            push @syms, $1;
+print "include is $curl_d\n";
+my $orig_curl_d = $curl_d;
+$curl_d = "-I" . $curl_d;
+my $constants = {};
+parse_constants($curl_h, $constants);
+parse_constants($multi_h, $constants);
+write_curlopt_constants($constants);
+write_easy_pm($constants);
+write_share_pm($constants);
+sub parse_constants {
+    my ($filename, $constants) = @_;
+    if (!defined($curl_h)) {
+        die "Cannot find $filename - cannot build constants files  - see Makefile.PL";
+    } else {
+        my %constants = %{$constants};
+        print "Found header in $filename\n";
+        my @syms;
+        my $has_cpp = 0;
+        open(H_IN, "-|", "cpp", $filename) and $has_cpp++;
+        unless ($has_cpp) {
+            warn "No working cpp ($!).  Parsing $filename in Perl";
+            open(H_IN, "<", $filename) or die("Can't open $filename, because: ".$!);
         }
-    }
-    close H;
+        while ( <H_IN> ) {
+            if ( /enum\s+(\S+\s+)?{/ .. /}/ ) {
+                s/^\s+//;
+                next unless /^CURL/;
+                chomp;
+                s/^(CURL[A-Za-z0-9_]*_) ([A-Za-z0-9_])/$1$2/;  # Strip intervening space from ISO CPP macro
+                s/[,\s].*//;
+                s/=.*$//;
+                next unless /^\w+$/;
+                push @syms, $_;
+            }
+        }
+        close H_IN;
+        open (H, "<", $filename) or die ("Cannot open $filename: ".$!);
+        while(<H>) {
+            if (/^#define (CURL[A-Za-z0-9_]*)/) {
+                push @syms, $1;
+            }
+        }
+        close H;
 
-    for my $e (sort @syms) {
-       if($e =~ /(OBSOLETE|^CURL_EXTERN|_LAST\z|_LASTENTRY\z)/) {
-          next;
-       }
-       my ($group) = $e =~ m/^([^_]+_)/;
-       $constants{$group}->{$e} = $e;
-    }
-    unless ($has_cpp) {
-    open(CURL_H, "<" . $curl_h) or die "Can't open curl.h\n";
-    while (<CURL_H>) {
-        if ($_ =~ m/CINIT\(/ and $_ !~ m/#/) {
-            my ($option, $type, $code) = m/.*CINIT\((\w*)\s*,\s*(\w+)\s*,\s*(\d+).*/;
-	    $constants{"CURLOPT_"}->{"CURLOPT_".$option} = "CURLOPT_".$option;
-	} elsif ($_ =~ m/^#define CURLOPT_\w+\s+CURLOPT_\w+/) {
-            my ($option, $value) =
-                m/^#define CURLOPT_(\w+)\s+CURLOPT_(\w+)/;
-	    $constants{"CURLOPT_"}->{"CURLOPT_".$option} = "CURLOPT_".$value;
-        } elsif ($_ =~ m/^\s*((CURLINFO_|CURLSHOPT_|CURLE_)\w+)/) {
-	    $constants{$2}->{$1}= $1;
-        } elsif ($_ =~ m/^\s*((CURL_)(?:\w+))(?:[,\s]*)(?:\/\*.*)?$/) {
-	    $constants{$2}->{$1} = $1;
-        } elsif ($_ =~ m/^\s*((CURLPROXY_)(?:\w+))\s*=\s*\d+/) {
-            $constants{$2}->{$1} = $1;
-        } elsif ($_ =~ m/CFINIT\(/ and $_ !~ m/#/) {
-            my ($option) = m/.*CFINIT\((\w*)\s*.*/;
-	    $constants{"CURLFORM_"}->{"CURLFORM_".$option} = "CURLFORM_".$option;
+        for my $e (sort @syms) {
+            if ($e =~ /(OBSOLETE|^CURL_EXTERN|_LAST\z|_LASTENTRY\z)/) {
+                next;
+            }
+            my ($group) = $e =~ m/^([^_]+_)/;
+            $constants{$group}->{$e} = $e;
         }
+        unless ($has_cpp) {
+            open(CURL_H, "<" . $filename) or die "Can't open $filename\n";
+            while (<CURL_H>) {
+                if ($_ =~ m/CINIT\(/ and $_ !~ m/#/) {
+                    my ($option, $type, $code) = m/.*CINIT\((\w*)\s*,\s*(\w+)\s*,\s*(\d+).*/;
+                    $constants{"CURLOPT_"}->{"CURLOPT_".$option} = "CURLOPT_".$option;
+                } elsif ($_ =~ m/^#define CURLOPT_\w+\s+CURLOPT_\w+/) {
+                    my ($option, $value) = m/^#define CURLOPT_(\w+)\s+CURLOPT_(\w+)/;
+                    $constants{"CURLOPT_"}->{"CURLOPT_".$option} = "CURLOPT_".$value;
+                } elsif ($_ =~ m/^\s*((CURLINFO_|CURLSHOPT_|CURLE_)\w+)/) {
+	                $constants{$2}->{$1}= $1;
+                } elsif ($_ =~ m/^\s*((CURL_)(?:\w+))(?:[,\s]*)(?:\/\*.*)?$/) {
+	                $constants{$2}->{$1} = $1;
+                } elsif ($_ =~ m/^\s*((CURLPROXY_)(?:\w+))\s*=\s*\d+/) {
+                    $constants{$2}->{$1} = $1;
+                } elsif ($_ =~ m/CFINIT\(/ and $_ !~ m/#/) {
+                    my ($option) = m/.*CFINIT\((\w*)\s*.*/;
+	                $constants{"CURLFORM_"}->{"CURLFORM_".$option} = "CURLFORM_".$option;
+                }
+            }
+            close(CURL_H);
+        }
+    %{$constants} = %constants;
     }
-    close(CURL_H);
-    }
+}
+sub write_curlopt_constants {
+    my $ref = shift;
+    my %constants = %{ $ref };
     print "Building curlopt-constants.c for your libcurl version\n";
 
-    open(CURL_XS, ">curlopt-constants.c")
-        or die "Can't write curlopt-constants.c\n";
+    open(CURL_XS, ">curlopt-constants.c") or die "Can't write curlopt-constants.c\n";
 
     # boilerplate xs constant function here
     print CURL_XS <<HERE
@@ -168,12 +182,12 @@ constant(const char *name)
 {
     errno = 0;
 HERE
-        ;
-for my $group (reverse sort keys %constants) {
-	my $grouplength = length($group);
-	my $groupref = $constants{$group};
-	my @constants = keys %{$constants{$group}};
-	print CURL_XS <<HERE2
+    ;
+    for my $group (reverse sort keys %constants) {
+	    my $grouplength = length($group);
+	    my $groupref = $constants{$group};
+	    my @constants = keys %{$constants{$group}};
+	    print CURL_XS <<HERE2
 
     if (strncmp(name, "$group", $grouplength) == 0) {
         name += $grouplength;
@@ -184,7 +198,7 @@ HERE2
     for my $next_initial ('A' .. 'Z') {
         print CURL_XS "        case '$next_initial':\n";
         my $count = 0;
-        foreach my $option (sort @constants) {
+        for my $option (sort @constants) {
             my $remainder = substr($option, length($group), length($option));
             my $initial = substr($remainder, 0, 1);
             if ($next_initial eq $initial) {
@@ -213,7 +227,11 @@ HERE
         ;
 
     close(CURL_XS);
+}
 
+sub write_easy_pm {
+    my $ref = shift;
+    my %constants = %{ $ref };
     print "Building Easy.pm constants for your libcurl version\n";
 
     open(EASY_PM,    ">lib/WWW/Curl/Easy.pm")    or die "Can't create lib/WWW/Curl/Easy.pm\n";
@@ -232,7 +250,10 @@ HERE
     }
     close(EASY_PM);
     close(EASY_PM_IN);
-
+}
+sub write_share_pm {
+    my $ref = shift;
+    my %constants = %{ $ref };
 	print "Building Share.pm constants for your libcurl version\n";
 
     open(SHARE_PM,   ">lib/WWW/Curl/Share.pm")    or die "Can't create lib/WWW/Curl/Share.pm\n";
