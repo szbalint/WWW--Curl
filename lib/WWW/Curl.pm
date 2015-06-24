@@ -43,73 +43,73 @@ in the sense normally used on CPAN.
 
 Here is a small snippet of making a request with WWW::Curl::Easy.
 
-	use strict;
-	use warnings;
-	use WWW::Curl::Easy;
+    use strict;
+    use warnings;
+    use WWW::Curl::Easy;
 
-	my $curl = WWW::Curl::Easy->new;
-	
-	$curl->setopt(CURLOPT_HEADER,1);
-	$curl->setopt(CURLOPT_URL, 'http://example.com');
+    my $curl = WWW::Curl::Easy->new;
+    
+    $curl->setopt(CURLOPT_HEADER,1);
+    $curl->setopt(CURLOPT_URL, 'http://example.com');
 
-	# A filehandle, reference to a scalar or reference to a typeglob can be used here.
-	my $response_body;
-	$curl->setopt(CURLOPT_WRITEDATA,\$response_body);
+    # A filehandle, reference to a scalar or reference to a typeglob can be used here.
+    my $response_body;
+    $curl->setopt(CURLOPT_WRITEDATA,\$response_body);
 
-	# Starts the actual request
-	my $retcode = $curl->perform;
+    # Starts the actual request
+    my $retcode = $curl->perform;
 
-	# Looking at the results...
-	if ($retcode == 0) {
-		print("Transfer went ok\n");
-		my $response_code = $curl->getinfo(CURLINFO_HTTP_CODE);
-		# judge result and next action based on $response_code
-		print("Received response: $response_body\n");
-	} else {
-		# Error code, type of error, error message
-		print("An error happened: $retcode ".$curl->strerror($retcode)." ".$curl->errbuf."\n");
-	}
+    # Looking at the results...
+    if ($retcode == 0) {
+        print("Transfer went ok\n");
+        my $response_code = $curl->getinfo(CURLINFO_HTTP_CODE);
+        # judge result and next action based on $response_code
+        print("Received response: $response_body\n");
+    } else {
+        # Error code, type of error, error message
+        print("An error happened: $retcode ".$curl->strerror($retcode)." ".$curl->errbuf."\n");
+    }
 
 See L<curl_easy_setopt(3)> for details of C<setopt()>.
 
 =head1 WWW::Curl::Multi
 
-	use strict;
-	use warnings;
-	use WWW::Curl::Easy;
-	use WWW::Curl::Multi;
+    use strict;
+    use warnings;
+    use WWW::Curl::Easy;
+    use WWW::Curl::Multi;
 
-	my %easy;
-	my $curl = WWW::Curl::Easy->new;
-	my $curl_id = '13'; # This should be a handle unique id.
-	$easy{$curl_id} = $curl;
-	my $active_handles = 0;
+    my %easy;
+    my $curl = WWW::Curl::Easy->new;
+    my $curl_id = '13'; # This should be a handle unique id.
+    $easy{$curl_id} = $curl;
+    my $active_handles = 0;
 
-	$curl->setopt(CURLOPT_PRIVATE,$curl_id);
-	# do the usual configuration on the handle
-	...
+    $curl->setopt(CURLOPT_PRIVATE,$curl_id);
+    # do the usual configuration on the handle
+    ...
 
-	my $curlm = WWW::Curl::Multi->new;
-	
-	# Add some easy handles
-	$curlm->add_handle($curl);
-	$active_handles++;
+    my $curlm = WWW::Curl::Multi->new;
+    
+    # Add some easy handles
+    $curlm->add_handle($curl);
+    $active_handles++;
 
-	while ($active_handles) {
-		my $active_transfers = $curlm->perform;
-		if ($active_transfers != $active_handles) {
-			while (my ($id,$return_value) = $curlm->info_read) {
-				if ($id) {
-					$active_handles--;
-					my $actual_easy_handle = $easy{$id};
-					# do the usual result/error checking routine here
-					...
-					# letting the curl handle get garbage collected, or we leak memory.
-					delete $easy{$id};
-				}
-			}
-		}
-	}
+    while ($active_handles) {
+        my $active_transfers = $curlm->perform;
+        if ($active_transfers != $active_handles) {
+            while (my ($id,$return_value) = $curlm->info_read) {
+                if ($id) {
+                    $active_handles--;
+                    my $actual_easy_handle = $easy{$id};
+                    # do the usual result/error checking routine here
+                    ...
+                    # letting the curl handle get garbage collected, or we leak memory.
+                    delete $easy{$id};
+                }
+            }
+        }
+    }
 
 This interface is different than what the C API does. $curlm->perform is non-blocking and performs
 requests in parallel. The method does a little work and then returns control, therefor it has to be called
@@ -133,37 +133,37 @@ a new batch of easy handles for processing.
 
 =head1 WWW::Curl::Share
 
-	use WWW::Curl::Share;
-	my $curlsh = new WWW::Curl::Share;
-	$curlsh->setopt(CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
-	$curlsh->setopt(CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
-	$curl->setopt(CURLOPT_SHARE, $curlsh);
-	$curlsh->setopt(CURLSHOPT_UNSHARE, CURL_LOCK_DATA_COOKIE);
-	$curlsh->setopt(CURLSHOPT_UNSHARE, CURL_LOCK_DATA_DNS);
+    use WWW::Curl::Share;
+    my $curlsh = new WWW::Curl::Share;
+    $curlsh->setopt(CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
+    $curlsh->setopt(CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
+    $curl->setopt(CURLOPT_SHARE, $curlsh);
+    $curlsh->setopt(CURLSHOPT_UNSHARE, CURL_LOCK_DATA_COOKIE);
+    $curlsh->setopt(CURLSHOPT_UNSHARE, CURL_LOCK_DATA_DNS);
 
 WWW::Curl::Share is an extension to WWW::Curl::Easy which makes it possible
 to use a single cookies/dns cache for several Easy handles.
 
 It's usable methods are:
-	
-	$curlsh = new WWW::Curl::Share
-		This method constructs a new WWW::Curl::Share object.
+    
+    $curlsh = new WWW::Curl::Share
+        This method constructs a new WWW::Curl::Share object.
 
-	$curlsh->setopt(CURLSHOPT_SHARE, $value );
-		Enables share for:
-			CURL_LOCK_DATA_COOKIE	use single cookies database
-			CURL_LOCK_DATA_DNS	use single DNS cache
-	$curlsh->setopt(CURLSHOPT_UNSHARE, $value );
-		Disable share for given $value (see CURLSHOPT_SHARE)
+    $curlsh->setopt(CURLSHOPT_SHARE, $value );
+        Enables share for:
+            CURL_LOCK_DATA_COOKIE    use single cookies database
+            CURL_LOCK_DATA_DNS       use single DNS cache
+    $curlsh->setopt(CURLSHOPT_UNSHARE, $value );
+        Disable share for given $value (see CURLSHOPT_SHARE)
 
-	$curlsh->strerror( ErrNo )
-		This method returns a string describing the CURLSHcode error 
-		code passed in the argument errornum.
+    $curlsh->strerror( ErrNo )
+        This method returns a string describing the CURLSHcode error 
+        code passed in the argument errornum.
 
 This is how you enable sharing for a specific WWW::Curl::Easy handle:
 
-	$curl->setopt(CURLOPT_SHARE, $curlsh)
-		Attach share object to WWW::Curl::Easy instance
+    $curl->setopt(CURLOPT_SHARE, $curlsh)
+        Attach share object to WWW::Curl::Easy instance
 
 =head1 WWW::Curl::Form
 
