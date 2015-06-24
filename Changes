@@ -1,4 +1,8 @@
 Revision history for the Perl binding of libcurl, WWW::Curl.
+
+    - Test if Curl object can be sent to callback as PROGRESSDTA [Alberto Simões];
+    - Test SPEED_DOWNLOAD and CONTENT_TYPE properties [Alberto Simões];
+
 4.17 Fri Feb 21 2014: - Balint Szilakszi <szbalint at cpan.org>
 
     - Fixing build process for old libcurl versions without CURLOPT_RESOLVE.

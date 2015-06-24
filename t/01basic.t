@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 19;
+use Test::More tests => 21;
 use File::Temp qw/tempfile/;
 
 BEGIN { use_ok( 'WWW::Curl::Easy' ); }
@@ -47,6 +47,9 @@ my $realurl = $curl->getinfo(CURLINFO_EFFECTIVE_URL);
 ok( $realurl, "getinfo returns CURLINFO_EFFECTIVE_URL");
 my $httpcode = $curl->getinfo(CURLINFO_HTTP_CODE);
 ok( $httpcode, "getinfo returns CURLINFO_HTTP_CODE");
+my $content_type = $curl->getinfo(CURLINFO_CONTENT_TYPE);
+ok ($content_type, "getinfo returns CURLINFO_CONTENT_TYPE");
+like ($content_type, qr!text/html!, "Content type looks like html");
 
 SKIP: {
     skip "Only testing cookies against google.com", 2 unless $url eq "http://www.google.com";
