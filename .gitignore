@@ -1,0 +1,9 @@
+Curl.c
+Curl.o
+MYMETA.json
+MYMETA.yml
+Makefile
+Makefile.old
+blib/
+curlopt-constants.c
+pm_to_blib
