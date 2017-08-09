@@ -1,6 +1,7 @@
 # Makefile.PL for Perl module WWW::Curl
 # Check out the README file for more information.
 
+use lib ".";
 use inc::Module::Install;
 
 name			'WWW-Curl';
