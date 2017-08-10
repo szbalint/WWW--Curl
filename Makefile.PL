@@ -1,6 +1,7 @@
 # Makefile.PL for Perl module WWW::Curl
 # Check out the README file for more information.
 
+use lib ".";
 use inc::Module::Install;
 
 name			'WWW-Curl';
@@ -137,7 +138,7 @@ sub parse_constants {
         close H;
 
         for my $e (sort @syms) {
-            if ($e =~ /(OBSOLETE|^CURL_EXTERN|_LAST\z|_LASTENTRY\z)/) {
+            if ($e =~ /(OBSOLETE|^CURL_EXTERN|^CURL_STRICTER\z|^CURL_DID_MEMORY_FUNC_TYPEDEFS\z|_LAST\z|_LASTENTRY\z)/) {
                 next;
             }
             my ($group) = $e =~ m/^([^_]+_)/;
