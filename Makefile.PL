@@ -130,6 +130,13 @@ sub parse_constants {
         close H_IN;
         open (H, "<", $filename) or die ("Cannot open $filename: ".$!);
         while(<H>) {
+            # Skip defines without values like:
+            #    #define CURL_STRICTER
+            if (/^#define (CURL[A-Za-z0-9_]*)$/) {
+                chomp;
+                warn "Skipping '$_': does not define a symbol";
+                next;
+            }
             if (/^#define (CURL[A-Za-z0-9_]*)/) {
                 push @syms, $1;
             }
