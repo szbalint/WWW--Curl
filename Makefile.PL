@@ -92,6 +92,14 @@ foreach my $try (@includes) {
     }
 }
 
+# Make sure we have what we expect
+if (!defined($curl_h)) {
+     die "Cannot find curllib curl.h - cannot build constants files  - see Makefile.PL";
+}
+if (!defined($multi_h)) {
+     die "Cannot find curllib multi.h - cannot build constants files  - see Makefile.PL";
+}
+
 print "include is $curl_d\n";
 my $orig_curl_d = $curl_d;
 $curl_d = "-I" . $curl_d;
