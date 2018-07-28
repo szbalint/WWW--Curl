@@ -1,7 +1,7 @@
 # Makefile.PL for Perl module WWW::Curl
 # Check out the README file for more information.
 
-use inc::Module::Install;
+use lib q[.]; use inc::Module::Install;
 
 name			'WWW-Curl';
 abstract		'Perl extension interface for libcurl';
