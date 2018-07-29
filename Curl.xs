@@ -626,6 +626,8 @@ curl_easy_init(...)
 	/* we always collect this, in case it's wanted */
         curl_easy_setopt(self->curl, CURLOPT_ERRORBUFFER, self->errbuf);
 
+    /*    curl_easy_setopt(self->curl, CURLOPT_CERTINFO, 1L); */
+
         XSRETURN(1);
 
 void
@@ -908,18 +910,40 @@ curl_easy_getinfo(self, option, ... )
 #ifdef CURLINFO_SLIST
             case CURLINFO_SLIST:
             {
-                struct curl_slist *vlist, *entry;
-                AV *items = newAV();
-                curl_easy_getinfo(self->curl, option, &vlist);
-                if (vlist != NULL) {
-                    entry = vlist;
-                    while (entry) {
-                        av_push(items, newSVpv(entry->data, 0));
-                        entry = entry->next;
+                # We have to specially handle CERTINFO
+                if ( option == ( CURLINFO_SLIST + 34 ) ) {
+                    struct curl_certinfo *ci;
+                    curl_easy_getinfo(self->curl, CURLINFO_CERTINFO, &ci);
+                    if ( ci->num_of_certs == 0 ) {
+                        RETVAL = NULL;
+                        break;
                     }
-                    curl_slist_free_all(vlist);
+                    AV *certarray = newAV();
+                    int i;
+                    for(i = 0; i < ci->num_of_certs; i++) {
+                        AV *elementarray = newAV();
+                        struct curl_slist *slist;
+                        for(slist = ci->certinfo[i]; slist; slist = slist->next) {
+                            av_push(elementarray, newSVpv(slist->data, 0));
+                        }
+                        av_push(certarray,newRV(sv_2mortal((SV *) elementarray)));
+                        curl_slist_free_all(slist);
+                    }
+                    RETVAL = newRV(sv_2mortal((SV *) certarray));
+                } else {
+                    struct curl_slist *vlist, *entry;
+                    AV *items = newAV();
+                    curl_easy_getinfo(self->curl, option, &vlist);
+                    if (vlist != NULL) {
+                        entry = vlist;
+                        while (entry) {
+                            av_push(items, newSVpv(entry->data, 0));
+                            entry = entry->next;
+                        }
+                        curl_slist_free_all(vlist);
+                    }
+                    RETVAL = newRV(sv_2mortal((SV *) items));
                 }
-                RETVAL = newRV(sv_2mortal((SV *) items));
                 break;
             }
 #endif /* CURLINFO_SLIST */
