@@ -1,7 +1,7 @@
 # Makefile.PL for Perl module WWW::Curl
 # Check out the README file for more information.
 
-use inc::Module::Install;
+use lib q[.]; use inc::Module::Install;
 
 name			'WWW-Curl';
 abstract		'Perl extension interface for libcurl';
@@ -92,6 +92,14 @@ foreach my $try (@includes) {
     }
 }
 
+# Make sure we have what we expect
+if (!defined($curl_h)) {
+     die "Cannot find curllib curl.h - cannot build constants files  - see Makefile.PL";
+}
+if (!defined($multi_h)) {
+     die "Cannot find curllib multi.h - cannot build constants files  - see Makefile.PL";
+}
+
 print "include is $curl_d\n";
 my $orig_curl_d = $curl_d;
 $curl_d = "-I" . $curl_d;
@@ -130,6 +138,13 @@ sub parse_constants {
         close H_IN;
         open (H, "<", $filename) or die ("Cannot open $filename: ".$!);
         while(<H>) {
+            # Skip defines without values like:
+            #    #define CURL_STRICTER
+            if (/^#define (CURL[A-Za-z0-9_]*)$/) {
+                chomp;
+                warn "Skipping '$_': does not define a symbol";
+                next;
+            }
             if (/^#define (CURL[A-Za-z0-9_]*)/) {
                 push @syms, $1;
             }
