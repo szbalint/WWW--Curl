@@ -911,7 +911,7 @@ curl_easy_getinfo(self, option, ... )
             case CURLINFO_SLIST:
             {
                 # We have to specially handle CERTINFO
-                if ( option == ( CURLINFO_SLIST + 34 ) ) {
+                if ( option == CURLINFO_CERTINFO ) {
                     struct curl_certinfo *ci;
                     curl_easy_getinfo(self->curl, CURLINFO_CERTINFO, &ci);
                     if ( ci->num_of_certs == 0 ) {
