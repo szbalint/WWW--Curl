@@ -358,7 +358,6 @@ fwrite_wrapper2 (
 
     if (call_function) { /* We are doing a callback to perl */
         int count, status;
-        SV *sv;
 
         ENTER;
         SAVETMPS;
@@ -608,6 +607,8 @@ curl_easy_init(...)
         char *sclass = "WWW::Curl::Easy";
 
     PPCODE:
+        /* Prevent ununsed variable warning */
+        (void)(ix);
         if (items>0 && !SvROK(ST(0))) {
            STRLEN dummy;
            sclass = SvPV(ST(0),dummy);
@@ -951,6 +952,8 @@ int
 curl_easy_cleanup(self)
     WWW::Curl::Easy self
     CODE:
+       /* Prevent unused variable warning */
+       (void)(self);
        /* does nothing anymore - cleanup is automatic when a curl handle goes out of scope */
         RETVAL = 0;
     OUTPUT:
@@ -968,6 +971,8 @@ curl_easy_strerror(self, errornum)
         int errornum
     CODE:
 	{
+             /* Prevent unused variable */
+             (void)(self);
 #if (LIBCURL_VERSION_NUM>=0x070C00)
 	     const char * vchar = curl_easy_strerror(errornum);
 #else
@@ -1186,6 +1191,8 @@ curl_multi_strerror(self, errornum)
         int errornum
     CODE:
 	{
+             /* Prevent unused variable warning */
+             (void)(self);
 #if (LIBCURL_VERSION_NUM>=0x070C00)
 	     const char * vchar = curl_multi_strerror(errornum);
 #else
@@ -1256,6 +1263,8 @@ curl_share_strerror(self, errornum)
         int errornum
     CODE:
 	{
+             /* Prevent unused variable */
+             (void)(self);
 #if (LIBCURL_VERSION_NUM>=0x070C00)
 	     const char * vchar = curl_share_strerror(errornum);
 #else
