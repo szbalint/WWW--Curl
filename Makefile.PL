@@ -137,7 +137,7 @@ sub parse_constants {
         close H;
 
         for my $e (sort @syms) {
-            if ($e =~ /(OBSOLETE|^CURL_EXTERN|_LAST\z|_LASTENTRY\z)/) {
+            if ($e =~ /(OBSOLETE|^CURL_EXTERN|^CURLINC_CURL_H|^CURLINC_MULTI_H|^CURL_STRICTER\z|^CURL_DID_MEMORY_FUNC_TYPEDEFS\z|_LAST\z|_LASTENTRY\z)/) {
                 next;
             }
             my ($group) = $e =~ m/^([^_]+_)/;
