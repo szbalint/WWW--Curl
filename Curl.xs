@@ -68,6 +68,12 @@ typedef struct {
     struct curl_httppost * last;
 } perl_curl_form;
 
+/* To keep backward compability define __CURL_MULTI_H if it's not defined */
+#ifdef CURLINC_MULTI_H
+#  ifndef __CURL_MULTI_H
+#    define __CURL_MULTI_H 1
+#  endif
+#endif
 
 typedef struct {
 #ifdef __CURL_MULTI_H
