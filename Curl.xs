@@ -667,7 +667,7 @@ curl_easy_duphandle(self)
 	}
 	
 	if (self->callback[callback_index(CURLOPT_DEBUGFUNCTION)] || self->callback_ctx[callback_index(CURLOPT_DEBUGDATA)]) {
-		curl_easy_setopt(clone->curl, CURLOPT_DEBUGFUNCTION, debug_callback_func);
+		curl_easy_setopt(clone->curl, CURLOPT_DEBUGFUNCTION, (curl_debug_callback) debug_callback_func);
 		curl_easy_setopt(clone->curl, CURLOPT_DEBUGDATA, clone);
 	}
 
@@ -722,7 +722,7 @@ curl_easy_setopt(self, option, value, push=0)
                 perl_curl_easy_register_callback(aTHX_ self,&(self->callback_ctx[callback_index(option)]), value);
                 break;
             case CURLOPT_DEBUGDATA:
-		curl_easy_setopt(self->curl, CURLOPT_DEBUGFUNCTION, SvOK(value) ? debug_callback_func : NULL);
+		curl_easy_setopt(self->curl, CURLOPT_DEBUGFUNCTION, (curl_debug_callback) (SvOK(value) ? debug_callback_func : NULL));
         	curl_easy_setopt(self->curl, option, SvOK(value) ? self : NULL); 
                 perl_curl_easy_register_callback(aTHX_ self,&(self->callback_ctx[callback_index(option)]), value);
                 break;
@@ -743,7 +743,7 @@ curl_easy_setopt(self, option, value, push=0)
 		perl_curl_easy_register_callback(aTHX_ self,&(self->callback[callback_index(option)]), value);
 		break;
             case CURLOPT_DEBUGFUNCTION:
-		curl_easy_setopt(self->curl, option, SvOK(value) ? debug_callback_func : NULL);
+		curl_easy_setopt(self->curl, option, (curl_debug_callback) (SvOK(value) ? debug_callback_func : NULL));
 		curl_easy_setopt(self->curl, CURLOPT_DEBUGDATA, SvOK(value) ? self : NULL);
 		perl_curl_easy_register_callback(aTHX_ self,&(self->callback[callback_index(option)]), value);
 		break;
@@ -796,7 +796,7 @@ curl_easy_setopt(self, option, value, push=0)
 
             /* tell curl to redirect STDERR - value should be a glob */
             case CURLOPT_STDERR:
-                RETVAL = curl_easy_setopt(self->curl, option, IoOFP(sv_2io(value)) );
+                RETVAL = curl_easy_setopt(self->curl, option, (FILE *) IoOFP(sv_2io(value)) );
                 break;
 
             /* not working yet... */
@@ -817,7 +817,7 @@ curl_easy_setopt(self, option, value, push=0)
 		    WWW__Curl__Share wrapper;
 		    IV tmp = SvIV((SV*)SvRV(value));
 		    wrapper = INT2PTR(WWW__Curl__Share,tmp);
-		    RETVAL = curl_easy_setopt(self->curl, option, wrapper->curlsh);
+		    RETVAL = curl_easy_setopt(self->curl, option, (CURLSH *) wrapper->curlsh);
 		} else
 		    croak("value is not of type WWW::Curl::Share"); 
 		break;
@@ -1096,7 +1096,7 @@ curl_multi_info_read(self)
 	};
 	if (easy) {
 		curl_easy_getinfo(easy, CURLINFO_PRIVATE, &stashid);
-		curl_easy_setopt(easy, CURLINFO_PRIVATE, NULL);
+		curl_easy_setopt(easy, CURLINFO_PRIVATE, (curl_off_t) NULL);
 		curl_multi_remove_handle(self->curlm, easy);
 		XPUSHs(sv_2mortal(newSVpv(stashid,0)));
 		XPUSHs(sv_2mortal(newSViv(res)));
