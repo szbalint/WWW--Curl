@@ -18,6 +18,10 @@
 #include <curl/easy.h>
 #include <curl/multi.h>
 
+#if defined(__CURL_MULTI_H) && !defined(CURLINC_MULTI_H)
+#   define CURLINC_MULTI_H
+#endif
+
 #define header_callback_func writeheader_callback_func
 
 /* Do a favor for older perl versions */
@@ -70,7 +74,7 @@ typedef struct {
 
 
 typedef struct {
-#ifdef __CURL_MULTI_H
+#ifdef CURLINC_MULTI_H
     struct CURLM *curlm;
 #else
     struct void *curlm;
@@ -232,7 +236,7 @@ static perl_curl_multi * perl_curl_multi_new()
 {
     perl_curl_multi *self;
     Newxz(self, 1, perl_curl_multi);
-#ifdef __CURL_MULTI_H
+#ifdef CURLINC_MULTI_H
     self->curlm=curl_multi_init();
 #else
     croak("curl version too old to support curl_multi_init()");
@@ -243,7 +247,7 @@ static perl_curl_multi * perl_curl_multi_new()
 /* delete the multi */
 static void perl_curl_multi_delete(perl_curl_multi *self)
 {
-#ifdef __CURL_MULTI_H
+#ifdef CURLINC_MULTI_H
     if (self->curlm) 
         curl_multi_cleanup(self->curlm);
     Safefree(self);
@@ -1053,7 +1057,7 @@ curl_multi_add_handle(curlm, curl)
     WWW::Curl::Multi curlm
     WWW::Curl::Easy curl
     CODE:
-#ifdef __CURL_MULTI_H
+#ifdef CURLINC_MULTI_H
         curl_multi_add_handle(curlm->curlm, curl->curl);
 #endif
 
@@ -1062,7 +1066,7 @@ curl_multi_remove_handle(curlm, curl)
     WWW::Curl::Multi curlm
     WWW::Curl::Easy curl
     CODE:
-#ifdef __CURL_MULTI_H
+#ifdef CURLINC_MULTI_H
         curl_multi_remove_handle(curlm->curlm, curl->curl);
 #endif
 
@@ -1137,7 +1141,7 @@ curl_multi_perform(self)
     PREINIT:
         int remaining;
     CODE:
-#ifdef __CURL_MULTI_H
+#ifdef CURLINC_MULTI_H
         while(CURLM_CALL_MULTI_PERFORM ==
             curl_multi_perform(self->curlm, &remaining));
 	    RETVAL = remaining;
