@@ -112,7 +112,7 @@ See L<curl_easy_setopt(3)> for details of C<setopt()>.
     }
 
 This interface is different than what the C API does. $curlm->perform is non-blocking and performs
-requests in parallel. The method does a little work and then returns control, therefor it has to be called
+requests in parallel. The method does a little work and then returns control, therefore it has to be called
 periodically to get the job done. It's return value is the number of unfinished requests.
 
 When the number of unfinished requests changes compared to the number of active handles, $curlm->info_read
